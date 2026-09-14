@@ -1,0 +1,74 @@
+@import "tailwindcss";
+
+:root {
+  --paper: #f4efe6;
+  --paper-raised: #fbf8f1;
+  --ink: #1f1a14;
+  --muted: #6b6258;
+  --line: #ddd4c6;
+  --accent: #3f5c4a;
+  --accent-hover: #334a3d;
+  --danger: #8b3a2a;
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-paper-raised: var(--paper-raised);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-danger: var(--danger);
+  --font-sans: var(--font-geist-sans);
+  --font-serif: var(--font-newsreader);
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+.field {
+  width: 100%;
+  border-radius: 0.375rem;
+  border: 1px solid var(--line);
+  background: var(--paper-raised);
+  padding: 0.5rem 0.75rem;
+  color: var(--ink);
+  outline: none;
+}
+
+.field:focus {
+  border-color: var(--accent);
+}
+
+.btn-primary {
+  border-radius: 0.375rem;
+  background: var(--accent);
+  padding: 0.55rem 1rem;
+  color: white;
+  font-size: 0.875rem;
+}
+
+.btn-primary:hover {
+  background: var(--accent-hover);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+}
+
+.panel {
+  border: 1px solid var(--line);
+  background: var(--paper-raised);
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+}
+
+.panel-title {
+  font-family: var(--font-newsreader), ui-serif, Georgia, serif;
+  font-size: 1.125rem;
+  letter-spacing: -0.02em;
+}

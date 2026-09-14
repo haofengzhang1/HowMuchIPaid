@@ -1,0 +1,45 @@
+-- Optional: run this in the Supabase SQL Editor if you do not use `npx prisma db push`.
+-- Prisma uses these table and column names.
+
+CREATE TABLE IF NOT EXISTS "users" (
+  "id" TEXT PRIMARY KEY,
+  "email" TEXT NOT NULL,
+  "password_hash" TEXT NOT NULL,
+  "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS "users_email_key" ON "users"("email");
+
+CREATE TABLE IF NOT EXISTS "people" (
+  "id" TEXT PRIMARY KEY,
+  "owner_id" TEXT NOT NULL,
+  "name" TEXT NOT NULL,
+  "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "people_owner_id_fkey"
+    FOREIGN KEY ("owner_id") REFERENCES "users"("id")
+    ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS "people_owner_id_idx" ON "people"("owner_id");
+
+CREATE TABLE IF NOT EXISTS "expenses" (
+  "id" TEXT PRIMARY KEY,
+  "owner_id" TEXT NOT NULL,
+  "person_id" TEXT NOT NULL,
+  "amount" DECIMAL(12, 2) NOT NULL,
+  "currency" TEXT NOT NULL DEFAULT 'USD',
+  "category" TEXT NOT NULL,
+  "note" TEXT NOT NULL DEFAULT '',
+  "spent_at" TIMESTAMP(3) NOT NULL,
+  "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "expenses_owner_id_fkey"
+    FOREIGN KEY ("owner_id") REFERENCES "users"("id")
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT "expenses_person_id_fkey"
+    FOREIGN KEY ("person_id") REFERENCES "people"("id")
+    ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS "expenses_owner_id_idx" ON "expenses"("owner_id");
+CREATE INDEX IF NOT EXISTS "expenses_person_id_idx" ON "expenses"("person_id");
+CREATE INDEX IF NOT EXISTS "expenses_spent_at_idx" ON "expenses"("spent_at");

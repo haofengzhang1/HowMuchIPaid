@@ -1,0 +1,51 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String    @map("password_hash")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  people       Person[]
+  expenses     Expense[]
+
+  @@map("users")
+}
+
+model Person {
+  id        String    @id @default(cuid())
+  ownerId   String    @map("owner_id")
+  owner     User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  name      String
+  createdAt DateTime  @default(now()) @map("created_at")
+  expenses  Expense[]
+
+  @@index([ownerId])
+  @@map("people")
+}
+
+model Expense {
+  id        String   @id @default(cuid())
+  ownerId   String   @map("owner_id")
+  owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  personId  String   @map("person_id")
+  person    Person   @relation(fields: [personId], references: [id], onDelete: Restrict)
+  amount    Decimal  @db.Decimal(12, 2)
+  currency  String   @default("USD")
+  category  String
+  note      String   @default("")
+  spentAt   DateTime @map("spent_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([ownerId])
+  @@index([personId])
+  @@index([spentAt])
+  @@map("expenses")
+}
