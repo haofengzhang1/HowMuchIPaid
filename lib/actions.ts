@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-import { clearActiveNotebook, isSafeInvitePath, requireEditableOwner } from "@/lib/access";
+import { clearActiveNotebook, getAccessibleNotebooks, householdOwnerIds, isSafeInvitePath, requireEditableOwner, setActiveNotebook } from "@/lib/access";
 import { isCategory } from "@/lib/categories";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
@@ -65,6 +65,8 @@ export async function signUp(
   });
 
   await createSession(user.id);
+  const notebooks = await getAccessibleNotebooks(user.id, user.email);
+  if (notebooks[0]) await setActiveNotebook(notebooks[0].ownerId);
   redirect(nextPath(formData));
 }
 
@@ -87,6 +89,8 @@ export async function logIn(
   if (!ok) return { error: "Email or password is incorrect." };
 
   await createSession(user.id);
+  const notebooks = await getAccessibleNotebooks(user.id, user.email);
+  if (notebooks[0]) await setActiveNotebook(notebooks[0].ownerId);
   redirect(nextPath(formData));
 }
 
@@ -161,8 +165,9 @@ export async function deleteExpense(formData: FormData) {
   const user = await requireUser();
   const ownerId = await requireEditableOwner(user.id);
   const id = formString(formData, "id");
+  const ownerIds = await householdOwnerIds(ownerId);
   await prisma.expense.deleteMany({
-    where: { id, ownerId },
+    where: { id, ownerId: { in: ownerIds } },
   });
   refreshNotebook();
 }

@@ -30,15 +30,18 @@ export default async function PeoplePage() {
   }, undefined);
   const buckets = chartBuckets("all", new Date(), firstSpend);
   const personSeries = buildPersonSeries(expenses, buckets);
+  const expenseCounts = new Map<string, number>();
+  for (const expense of expenses) {
+    expenseCounts.set(expense.personName, (expenseCounts.get(expense.personName) ?? 0) + 1);
+  }
 
   return (
     <main className="grid gap-4 sm:gap-5">
       <div>
         <h1 className="text-xl font-semibold sm:text-2xl">People</h1>
         <p className="mt-1 text-sm text-muted">
-          {notebook.isOwn
-            ? "Invite an account to add them under Who. After they accept, they can see and edit this log."
-            : `People on ${notebook.email}'s log. Both of you can add and change expenses here.`}
+          Invite an account to share this log. After they accept, you both see the same expenses and
+          chart.
         </p>
       </div>
 
@@ -60,7 +63,8 @@ export default async function PeoplePage() {
             const label = personLabel(person, user.id);
             const isOwner = person.userId === notebook.ownerId;
             const leftover = !person.userId && !person.name.includes("@");
-            const canRemove = leftover && person._count.expenses === 0;
+            const count = expenseCounts.get(label) ?? expenseCounts.get(person.name) ?? 0;
+            const canRemove = leftover && count === 0;
             const total = totals.get(label) ?? totals.get(person.name) ?? 0;
             const share = stats.allTime > 0 ? Math.round((total / stats.allTime) * 100) : 0;
             return (
@@ -72,8 +76,7 @@ export default async function PeoplePage() {
                   <p className="font-medium break-all">{label}</p>
                   <p className="text-sm text-muted">
                     {isOwner ? "Owner · " : null}
-                    {person._count.expenses}{" "}
-                    {person._count.expenses === 1 ? "expense" : "expenses"} ·{" "}
+                    {count} {count === 1 ? "expense" : "expenses"} ·{" "}
                     {formatMoney(total)} all time · {share}% · this month{" "}
                     {formatMoney(monthTotals.get(label) ?? monthTotals.get(person.name) ?? 0)}
                   </p>
@@ -85,7 +88,7 @@ export default async function PeoplePage() {
                       Remove
                     </button>
                   </form>
-                ) : leftover && person._count.expenses > 0 ? (
+                ) : leftover && count > 0 ? (
                   <p className="text-xs text-muted">Old name, not an account</p>
                 ) : null}
               </li>

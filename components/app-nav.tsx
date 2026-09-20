@@ -18,13 +18,14 @@ export function AppNav({
   email,
   notebooks,
   activeOwnerId,
+  isShared,
 }: {
   email: string;
   notebooks: NotebookOption[];
   activeOwnerId: string;
+  isShared?: boolean;
 }) {
   const pathname = usePathname();
-  const active = notebooks.find((item) => item.ownerId === activeOwnerId);
 
   return (
     <>
@@ -35,9 +36,7 @@ export function AppNav({
               How Much I Paid
             </Link>
             <p className="truncate text-xs text-muted">{email}</p>
-            {active && !active.isOwn ? (
-              <p className="truncate text-xs text-muted">Editing {active.email}</p>
-            ) : null}
+            {isShared ? <p className="truncate text-xs text-muted">Shared log</p> : null}
           </div>
           <div className="flex shrink-0 flex-col items-end gap-2">
             {notebooks.length > 1 ? (

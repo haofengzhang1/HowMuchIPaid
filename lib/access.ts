@@ -32,36 +32,69 @@ export async function canEditNotebook(userId: string, ownerId: string) {
   return Boolean(share);
 }
 
-export async function requireEditableOwner(userId: string) {
-  const jar = await cookies();
-  const requested = jar.get(NOTEBOOK_COOKIE)?.value ?? userId;
-  if (requested === userId) return userId;
-  if (await canEditNotebook(userId, requested)) return requested;
-  return userId;
+export async function householdOwnerIds(canonicalOwnerId: string) {
+  const members = await prisma.notebookShare.findMany({
+    where: { ownerId: canonicalOwnerId },
+    select: { memberId: true },
+  });
+  return [canonicalOwnerId, ...members.map((share) => share.memberId)];
 }
 
 export async function getAccessibleNotebooks(userId: string, userEmail: string) {
-  const shares = await prisma.notebookShare.findMany({
-    where: { memberId: userId },
-    include: { owner: { select: { id: true, email: true } } },
-    orderBy: { createdAt: "asc" },
-  });
+  const [shares, ownedCount] = await Promise.all([
+    prisma.notebookShare.findMany({
+      where: { memberId: userId },
+      include: { owner: { select: { id: true, email: true } } },
+      orderBy: { createdAt: "asc" },
+    }),
+    prisma.notebookShare.count({ where: { ownerId: userId } }),
+  ]);
 
-  return [
-    { ownerId: userId, email: userEmail, isOwn: true },
-    ...shares.map((share) => ({
+  const notebooks: { ownerId: string; email: string; isOwn: boolean }[] = [];
+  const memberOnly = shares.length > 0 && ownedCount === 0;
+  if (!memberOnly) {
+    notebooks.push({ ownerId: userId, email: userEmail, isOwn: true });
+  }
+  for (const share of shares) {
+    notebooks.push({
       ownerId: share.owner.id,
       email: share.owner.email,
       isOwn: false,
-    })),
-  ];
+    });
+  }
+  return notebooks;
+}
+
+export async function requireEditableOwner(userId: string) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { email: true },
+  });
+  const notebooks = await getAccessibleNotebooks(userId, user?.email ?? "");
+  const jar = await cookies();
+  const requested = jar.get(NOTEBOOK_COOKIE)?.value;
+  return notebooks.find((item) => item.ownerId === requested)?.ownerId ?? notebooks[0]?.ownerId ?? userId;
 }
 
 export async function getActiveNotebook(user: { id: string; email: string }) {
-  const ownerId = await requireEditableOwner(user.id);
   const notebooks = await getAccessibleNotebooks(user.id, user.email);
-  const active = notebooks.find((item) => item.ownerId === ownerId) ?? notebooks[0];
-  return { ownerId: active.ownerId, email: active.email, isOwn: active.isOwn, notebooks };
+  const jar = await cookies();
+  const requested = jar.get(NOTEBOOK_COOKIE)?.value;
+  const active = notebooks.find((item) => item.ownerId === requested) ?? notebooks[0];
+  const members = await prisma.notebookShare.findMany({
+    where: { ownerId: active.ownerId },
+    include: { member: { select: { email: true } } },
+    orderBy: { createdAt: "asc" },
+  });
+  const sharedWith = members.map((share) => share.member.email);
+  return {
+    ownerId: active.ownerId,
+    email: active.email,
+    isOwn: active.isOwn,
+    isShared: sharedWith.length > 0 || !active.isOwn,
+    sharedWith,
+    notebooks,
+  };
 }
 
 export async function getInviteOrigin() {

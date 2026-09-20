@@ -11,8 +11,8 @@ export default async function ExpensesPage() {
   return (
     <main className="grid gap-4 sm:gap-5">
       <h1 className="text-xl font-semibold sm:text-2xl">Expenses</h1>
-      {!notebook.isOwn ? (
-        <p className="text-sm text-muted">Editing {notebook.email}</p>
+      {notebook.isShared ? (
+        <p className="text-sm text-muted">Same list for everyone on this log.</p>
       ) : null}
 
       <section className="panel">

@@ -52,8 +52,12 @@ export default async function DashboardPage({
     <main className="grid gap-4 sm:gap-5">
       <div>
         <h1 className="text-xl font-semibold sm:text-2xl">Overview</h1>
-        {!notebook.isOwn ? (
-          <p className="mt-1 text-sm text-muted">Editing {notebook.email}</p>
+        {notebook.isShared ? (
+          <p className="mt-1 text-sm text-muted">
+            {notebook.isOwn
+              ? `Shared with ${notebook.sharedWith.join(", ")}`
+              : `Shared with ${notebook.email}`}
+          </p>
         ) : null}
       </div>
 

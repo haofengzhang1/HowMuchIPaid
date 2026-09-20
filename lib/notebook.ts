@@ -1,9 +1,20 @@
+import { householdOwnerIds } from "@/lib/access";
+import { ensureNotebookPeople, ensurePerson, personLabel } from "@/lib/participants";
 import { prisma } from "@/lib/prisma";
-import { ensureNotebookPeople, personLabel } from "@/lib/participants";
 import type { ExpenseView } from "@/lib/stats";
 
 export async function getNotebook(ownerId: string, currentUserId?: string) {
   await ensureNotebookPeople(ownerId);
+  const ownerIds = await householdOwnerIds(ownerId);
+
+  for (const id of ownerIds) {
+    if (id === ownerId) continue;
+    const member = await prisma.user.findUnique({
+      where: { id },
+      select: { id: true, email: true },
+    });
+    if (member) await ensurePerson(id, { email: member.email, userId: member.id });
+  }
 
   const [people, expenses] = await Promise.all([
     prisma.person.findMany({
@@ -12,7 +23,7 @@ export async function getNotebook(ownerId: string, currentUserId?: string) {
       include: { _count: { select: { expenses: true } } },
     }),
     prisma.expense.findMany({
-      where: { ownerId },
+      where: { ownerId: { in: ownerIds } },
       include: { person: true },
       orderBy: [{ spentAt: "desc" }, { createdAt: "desc" }],
     }),

@@ -46,7 +46,7 @@ export default async function InvitePage({
       <Shell>
         <h1 className="text-2xl font-semibold">Join a log</h1>
         <p className="mt-3 break-words text-sm text-muted">
-          {invite.owner.email} invited {invite.email} to see and edit their spending.
+          {invite.owner.email} invited {invite.email} to share the same spending log and chart.
         </p>
         <div className="mt-6 flex w-full flex-col gap-3 sm:flex-row">
           <Link href={`/login?next=${encodeURIComponent(next)}`} className="btn-primary w-full">
@@ -87,7 +87,7 @@ export default async function InvitePage({
     <Shell>
       <h1 className="text-2xl font-semibold">Join a log</h1>
       <p className="mt-3 break-words text-sm text-muted">
-        {invite.owner.email} invited you. If you accept, you can see and change their expenses.
+        {invite.owner.email} invited you. If you accept, you share the same expenses and chart.
       </p>
       <form action={acceptInvite} className="mt-6">
         <input type="hidden" name="token" value={token} />

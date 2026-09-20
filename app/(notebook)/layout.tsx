@@ -32,6 +32,7 @@ export default async function NotebookLayout({
         email={user.email}
         notebooks={notebook.notebooks}
         activeOwnerId={notebook.ownerId}
+        isShared={notebook.isShared}
       />
       <div className="mx-auto max-w-5xl px-4 py-4 pb-28 md:py-6 md:pb-8">{children}</div>
       <AddExpenseButton people={options} defaultPersonId={defaultPersonId} />

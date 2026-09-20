@@ -42,7 +42,8 @@ export default async function SharingPage() {
       <div>
         <h1 className="text-xl font-semibold sm:text-2xl">Sharing</h1>
         <p className="mt-1 text-sm text-muted">
-          Invite someone to this log. They appear under Who right away. After they accept, they can see and change expenses.
+          Invite someone to this log. After they accept, you both see and edit the same expenses and
+          chart.
         </p>
       </div>
 
@@ -135,9 +136,9 @@ export default async function SharingPage() {
       </section>
 
       <section className="panel">
-        <h2 className="panel-title">Logs you can edit</h2>
+        <h2 className="panel-title">Shared logs</h2>
         {joined.length === 0 ? (
-          <p className="mt-3 text-sm text-muted">You have not joined anyone else&apos;s log.</p>
+          <p className="mt-3 text-sm text-muted">You have not joined a shared log yet.</p>
         ) : (
           <ul className="mt-3 divide-y divide-line">
             {joined.map((share) => (
