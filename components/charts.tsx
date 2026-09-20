@@ -2,14 +2,14 @@ import type { NamedTotal } from "@/lib/stats";
 import { formatMoney } from "@/lib/money";
 
 const PALETTE = [
-  "#3f5c4a",
-  "#8b3a2a",
-  "#2c4a6e",
-  "#a65d3a",
-  "#6b5344",
-  "#4f6b5c",
-  "#7a5c2e",
-  "#4a4a4a",
+  "#123a73",
+  "#9b1c1c",
+  "#3d5a40",
+  "#6b4f2a",
+  "#444444",
+  "#2c5282",
+  "#7a3b2e",
+  "#4a5568",
 ];
 
 export function MonthlyChart({ data }: { data: NamedTotal[] }) {
@@ -32,8 +32,8 @@ export function MonthlyChart({ data }: { data: NamedTotal[] }) {
           const labelValue = chartMax * tick;
           return (
             <g key={tick}>
-              <line x1={pad.left} x2={width - pad.right} y1={y} y2={y} stroke="#ddd4c6" />
-              <text x={pad.left - 8} y={y + 4} textAnchor="end" fontSize="10" fill="#6b6258">
+              <line x1={pad.left} x2={width - pad.right} y1={y} y2={y} stroke="#d2d2cc" />
+              <text x={pad.left - 8} y={y + 4} textAnchor="end" fontSize="10" fill="#5a5a5a">
                 {labelValue.toLocaleString("en-US", {
                   maximumFractionDigits: labelValue > 0 && labelValue < 10 ? 1 : 0,
                 })}
@@ -52,14 +52,14 @@ export function MonthlyChart({ data }: { data: NamedTotal[] }) {
                 y={y}
                 width={barW * 0.64}
                 height={Math.max(h, item.value > 0 ? 2 : 0)}
-                fill="#3f5c4a"
+                fill="#123a73"
               />
               <text
                 x={x + barW * 0.32}
                 y={height - 12}
                 textAnchor="middle"
                 fontSize="10"
-                fill="#6b6258"
+                fill="#5a5a5a"
               >
                 {item.label.slice(0, 3)}
               </text>
@@ -88,9 +88,9 @@ export function PersonBars({ data }: { data: NamedTotal[] }) {
                 <span>{item.label}</span>
                 <span className="text-muted">{formatMoney(item.value)}</span>
               </div>
-              <div className="h-2.5 overflow-hidden rounded-full bg-line">
+              <div className="h-2 overflow-hidden bg-line">
                 <div
-                  className="h-full rounded-full"
+                  className="h-full"
                   style={{
                     width: `${Math.max((item.value / max) * 100, 2)}%`,
                     background: PALETTE[index % PALETTE.length],
@@ -139,7 +139,7 @@ export function CategoryPie({ data }: { data: NamedTotal[] }) {
                 />
               ))
             )}
-            <circle cx={cx} cy={cy} r={48} fill="#fbf8f1" />
+            <circle cx={cx} cy={cy} r={48} fill="#ffffff" />
           </svg>
           <ul className="grid w-full gap-2 text-sm">
             {slices.map((slice) => (

@@ -1,28 +1,21 @@
 import type { Metadata } from "next";
-import { Geist, Newsreader } from "next/font/google";
+import { IBM_Plex_Sans } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const plex = IBM_Plex_Sans({
+  variable: "--font-ibm-plex-sans",
   subsets: ["latin"],
-});
-
-const newsreader = Newsreader({
-  variable: "--font-newsreader",
-  subsets: ["latin"],
+  weight: ["400", "500", "600"],
 });
 
 export const metadata: Metadata = {
   title: "How Much I Paid",
-  description: "A notebook that remembers what you and others spend.",
+  description: "Log spending for yourself and other people.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${newsreader.variable} h-full antialiased`}
-    >
+    <html lang="en" className={`${plex.variable} h-full`}>
       <body className="min-h-full font-sans text-ink">{children}</body>
     </html>
   );

@@ -7,24 +7,22 @@ export default async function HomePage() {
   if (user) redirect("/dashboard");
 
   return (
-    <main className="mx-auto flex min-h-full max-w-3xl flex-col justify-center px-6 py-24">
-      <p className="text-sm uppercase tracking-[0.2em] text-muted">Spending notebook</p>
-      <h1 className="mt-4 font-serif text-5xl leading-tight tracking-tight">
-        How much I paid.
-      </h1>
-      <p className="mt-5 max-w-xl text-lg leading-8 text-muted">
-        Log what you spend. Add the people around you. The notebook keeps the
-        totals and turns them into charts.
+    <main className="mx-auto max-w-xl px-5 py-16">
+      <p className="text-sm text-muted">Expense log</p>
+      <h1 className="mt-2 text-3xl font-semibold">How Much I Paid</h1>
+      <p className="mt-4 max-w-md text-muted">
+        Write down what you spend. Add another person and track theirs too.
+        Totals and charts stay in your account.
       </p>
-      <div className="mt-10 flex flex-wrap gap-3">
+      <div className="mt-8 flex gap-3">
         <Link href="/signup" className="btn-primary inline-flex items-center">
-          Create an account
+          Create account
         </Link>
         <Link
           href="/login"
-          className="inline-flex items-center rounded-md border border-line px-4 py-2 text-sm hover:bg-paper-raised"
+          className="inline-flex items-center border border-line bg-surface px-4 py-2 text-sm"
         >
-          Sign in
+          Log in
         </Link>
       </div>
     </main>

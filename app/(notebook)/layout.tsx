@@ -12,7 +12,7 @@ export default async function NotebookLayout({
   return (
     <div className="min-h-full">
       <AppNav email={user.email} />
-      <div className="mx-auto max-w-6xl px-4 py-8">{children}</div>
+      <div className="mx-auto max-w-5xl px-4 py-6">{children}</div>
     </div>
   );
 }

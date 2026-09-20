@@ -93,7 +93,7 @@ export async function addPerson(
   const duplicate = await prisma.person.findFirst({
     where: { ownerId: user.id, name },
   });
-  if (duplicate) return { error: "That person is already in your notebook." };
+  if (duplicate) return { error: "That name is already on your list." };
 
   await prisma.person.create({
     data: { ownerId: user.id, name },

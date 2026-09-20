@@ -13,13 +13,10 @@ export default async function DashboardPage() {
   const recent = expenses.slice(0, 8);
 
   return (
-    <main className="grid gap-6">
-      <div>
-        <h1 className="font-serif text-3xl tracking-tight">Dashboard</h1>
-        <p className="mt-1 text-muted">What this notebook remembers so far.</p>
-      </div>
+    <main className="grid gap-5">
+      <h1 className="text-2xl font-semibold">Overview</h1>
 
-      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="grid gap-px border border-line bg-line sm:grid-cols-2 lg:grid-cols-4">
         <Stat label="All time" value={formatMoney(stats.allTime)} />
         <Stat label="This month" value={formatMoney(stats.thisMonth)} />
         <Stat label="Entries" value={String(stats.count)} />
@@ -27,13 +24,13 @@ export default async function DashboardPage() {
       </section>
 
       <section className="panel">
-        <h2 className="panel-title">Log a spend</h2>
-        <div className="mt-4">
-          <ExpenseForm people={people} />
+        <h2 className="panel-title">New entry</h2>
+        <div className="mt-3">
+          <ExpenseForm people={people} submitLabel="Add" />
         </div>
       </section>
 
-      <section className="grid gap-6 lg:grid-cols-2">
+      <section className="grid gap-5 lg:grid-cols-2">
         <div className="lg:col-span-2">
           <MonthlyChart data={stats.months} />
         </div>
@@ -42,12 +39,9 @@ export default async function DashboardPage() {
       </section>
 
       <section className="panel">
-        <h2 className="panel-title">Recent expenses</h2>
-        <div className="mt-4">
-          <ExpenseTable
-            expenses={recent}
-            empty="Nothing logged yet. Add the first amount above."
-          />
+        <h2 className="panel-title">Recent</h2>
+        <div className="mt-3">
+          <ExpenseTable expenses={recent} empty="No expenses yet." />
         </div>
       </section>
     </main>
@@ -56,9 +50,9 @@ export default async function DashboardPage() {
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="panel">
-      <p className="text-sm text-muted">{label}</p>
-      <p className="mt-2 font-serif text-2xl tracking-tight">{value}</p>
+    <div className="bg-surface px-4 py-3">
+      <p className="text-xs uppercase tracking-wide text-muted">{label}</p>
+      <p className="mt-1 text-xl font-semibold tabular-nums">{value}</p>
     </div>
   );
 }

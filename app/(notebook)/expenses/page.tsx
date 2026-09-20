@@ -8,26 +8,20 @@ export default async function ExpensesPage() {
   const { people, expenses } = await getNotebook(user.id);
 
   return (
-    <main className="grid gap-6">
-      <div>
-        <h1 className="font-serif text-3xl tracking-tight">Expenses</h1>
-        <p className="mt-1 text-muted">Every amount this notebook is holding.</p>
-      </div>
+    <main className="grid gap-5">
+      <h1 className="text-2xl font-semibold">Expenses</h1>
 
       <section className="panel">
-        <h2 className="panel-title">Add an expense</h2>
-        <div className="mt-4">
-          <ExpenseForm people={people} />
+        <h2 className="panel-title">Add</h2>
+        <div className="mt-3">
+          <ExpenseForm people={people} submitLabel="Add" />
         </div>
       </section>
 
       <section className="panel">
         <h2 className="panel-title">All entries</h2>
-        <div className="mt-4">
-          <ExpenseTable
-            expenses={expenses}
-            empty="No expenses yet. Log one above."
-          />
+        <div className="mt-3">
+          <ExpenseTable expenses={expenses} empty="No expenses yet." />
         </div>
       </section>
     </main>

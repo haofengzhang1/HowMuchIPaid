@@ -14,13 +14,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
     <form action={formAction} className="grid gap-4">
       <label className="grid gap-1 text-sm">
         <span className="text-muted">Email</span>
-        <input
-          name="email"
-          type="email"
-          autoComplete="email"
-          required
-          className="field"
-        />
+        <input name="email" type="email" autoComplete="email" required className="field" />
       </label>
       <label className="grid gap-1 text-sm">
         <span className="text-muted">Password</span>
@@ -37,10 +31,10 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
       <button type="submit" disabled={pending} className="btn-primary">
         {pending
           ? mode === "login"
-            ? "Signing in…"
+            ? "Logging in…"
             : "Creating account…"
           : mode === "login"
-            ? "Sign in"
+            ? "Log in"
             : "Create account"}
       </button>
     </form>

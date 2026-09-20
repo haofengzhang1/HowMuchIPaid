@@ -12,24 +12,20 @@ export default async function PeoplePage() {
   const totals = new Map(stats.byPerson.map((item) => [item.label, item.value]));
 
   return (
-    <main className="grid gap-6">
-      <div>
-        <h1 className="font-serif text-3xl tracking-tight">People</h1>
-        <p className="mt-1 text-muted">
-          Track your own spending, then add anyone else you want to remember.
-        </p>
-      </div>
+    <main className="grid gap-5">
+      <h1 className="text-2xl font-semibold">People</h1>
+      <p className="text-sm text-muted">You, plus anyone else you want to track.</p>
 
       <section className="panel">
-        <h2 className="panel-title">Add a person</h2>
-        <div className="mt-4">
+        <h2 className="panel-title">Add person</h2>
+        <div className="mt-3">
           <PersonForm />
         </div>
       </section>
 
       <section className="panel">
-        <h2 className="panel-title">In this notebook</h2>
-        <ul className="mt-4 divide-y divide-line">
+        <h2 className="panel-title">List</h2>
+        <ul className="mt-2 divide-y divide-line">
           {people.map((person) => {
             const canDelete = people.length > 1 && person._count.expenses === 0;
             return (
@@ -55,8 +51,8 @@ export default async function PeoplePage() {
                 ) : (
                   <p className="text-xs text-muted">
                     {person._count.expenses > 0
-                      ? "Remove their expenses first"
-                      : "Keep at least one person"}
+                      ? "Delete their expenses first"
+                      : "Need at least one person"}
                   </p>
                 )}
               </li>
