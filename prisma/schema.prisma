@@ -15,8 +15,38 @@ model User {
   createdAt    DateTime  @default(now()) @map("created_at")
   people       Person[]
   expenses     Expense[]
+  invitesSent  Invite[]        @relation("InvitesSent")
+  sharesOwned  NotebookShare[] @relation("SharesOwned")
+  sharesJoined NotebookShare[] @relation("SharesJoined")
 
   @@map("users")
+}
+
+model Invite {
+  id        String   @id @default(cuid())
+  ownerId   String   @map("owner_id")
+  owner     User     @relation("InvitesSent", fields: [ownerId], references: [id], onDelete: Cascade)
+  email     String
+  token     String   @unique
+  status    String   @default("pending")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([ownerId])
+  @@index([email, status])
+  @@map("invites")
+}
+
+model NotebookShare {
+  id        String   @id @default(cuid())
+  ownerId   String   @map("owner_id")
+  owner     User     @relation("SharesOwned", fields: [ownerId], references: [id], onDelete: Cascade)
+  memberId  String   @map("member_id")
+  member    User     @relation("SharesJoined", fields: [memberId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([ownerId, memberId])
+  @@index([memberId])
+  @@map("notebook_shares")
 }
 
 model Person {

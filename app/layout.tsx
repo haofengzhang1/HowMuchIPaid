@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Sans } from "next/font/google";
 import "./globals.css";
 
@@ -13,10 +13,17 @@ export const metadata: Metadata = {
   description: "Log spending for yourself and other people.",
 };
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#f4f4f1",
+};
+
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${plex.variable} h-full`}>
-      <body className="min-h-full font-sans text-ink">{children}</body>
+      <body className="min-h-full bg-bg font-sans text-ink antialiased">{children}</body>
     </html>
   );
 }

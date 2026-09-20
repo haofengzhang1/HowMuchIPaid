@@ -11,3 +11,5 @@ Log spending for yourself and other people. Accounts and expenses are stored in 
 5. `npm run dev`
 
 Sign up at http://localhost:3000. New accounts show up in Supabase **Table Editor → users** (`email` and `password_hash`).
+
+Invite another account from **Sharing**. After they accept, they can see and edit that log.

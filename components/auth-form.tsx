@@ -3,7 +3,13 @@
 import { useActionState } from "react";
 import { logIn, signUp, type ActionState } from "@/lib/actions";
 
-export function AuthForm({ mode }: { mode: "login" | "signup" }) {
+export function AuthForm({
+  mode,
+  next,
+}: {
+  mode: "login" | "signup";
+  next?: string;
+}) {
   const action = mode === "login" ? logIn : signUp;
   const [state, formAction, pending] = useActionState<ActionState, FormData>(
     action,
@@ -12,9 +18,17 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
 
   return (
     <form action={formAction} className="grid gap-4">
+      {next ? <input type="hidden" name="next" value={next} /> : null}
       <label className="grid gap-1 text-sm">
         <span className="text-muted">Email</span>
-        <input name="email" type="email" autoComplete="email" required className="field" />
+        <input
+          name="email"
+          type="email"
+          autoComplete="email"
+          inputMode="email"
+          required
+          className="field"
+        />
       </label>
       <label className="grid gap-1 text-sm">
         <span className="text-muted">Password</span>
@@ -28,7 +42,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
         />
       </label>
       {state?.error ? <p className="text-sm text-danger">{state.error}</p> : null}
-      <button type="submit" disabled={pending} className="btn-primary">
+      <button type="submit" disabled={pending} className="btn-primary w-full">
         {pending
           ? mode === "login"
             ? "Logging in…"

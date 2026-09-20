@@ -43,3 +43,36 @@ CREATE TABLE IF NOT EXISTS "expenses" (
 CREATE INDEX IF NOT EXISTS "expenses_owner_id_idx" ON "expenses"("owner_id");
 CREATE INDEX IF NOT EXISTS "expenses_person_id_idx" ON "expenses"("person_id");
 CREATE INDEX IF NOT EXISTS "expenses_spent_at_idx" ON "expenses"("spent_at");
+
+CREATE TABLE IF NOT EXISTS "invites" (
+  "id" TEXT PRIMARY KEY,
+  "owner_id" TEXT NOT NULL,
+  "email" TEXT NOT NULL,
+  "token" TEXT NOT NULL,
+  "status" TEXT NOT NULL DEFAULT 'pending',
+  "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "invites_owner_id_fkey"
+    FOREIGN KEY ("owner_id") REFERENCES "users"("id")
+    ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS "invites_token_key" ON "invites"("token");
+CREATE INDEX IF NOT EXISTS "invites_owner_id_idx" ON "invites"("owner_id");
+CREATE INDEX IF NOT EXISTS "invites_email_status_idx" ON "invites"("email", "status");
+
+CREATE TABLE IF NOT EXISTS "notebook_shares" (
+  "id" TEXT PRIMARY KEY,
+  "owner_id" TEXT NOT NULL,
+  "member_id" TEXT NOT NULL,
+  "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "notebook_shares_owner_id_fkey"
+    FOREIGN KEY ("owner_id") REFERENCES "users"("id")
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT "notebook_shares_member_id_fkey"
+    FOREIGN KEY ("member_id") REFERENCES "users"("id")
+    ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS "notebook_shares_owner_id_member_id_key"
+  ON "notebook_shares"("owner_id", "member_id");
+CREATE INDEX IF NOT EXISTS "notebook_shares_member_id_idx" ON "notebook_shares"("member_id");

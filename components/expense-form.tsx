@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import { addExpense, type ActionState } from "@/lib/actions";
 import { CATEGORIES } from "@/lib/categories";
 import { todayInputValue } from "@/lib/money";
@@ -10,26 +10,38 @@ type PersonOption = { id: string; name: string };
 export function ExpenseForm({
   people,
   submitLabel = "Save expense",
+  onSaved,
 }: {
   people: PersonOption[];
   submitLabel?: string;
+  onSaved?: () => void;
 }) {
   const [state, action, pending] = useActionState<ActionState, FormData>(
     addExpense,
     undefined,
   );
+  const wasPending = useRef(false);
+
+  useEffect(() => {
+    if (wasPending.current && !pending && !state?.error) {
+      onSaved?.();
+    }
+    wasPending.current = pending;
+  }, [pending, state, onSaved]);
 
   return (
-    <form action={action} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
+    <form action={action} className="grid gap-3 sm:grid-cols-2">
       <label className="grid gap-1 text-sm">
         <span className="text-muted">Amount</span>
         <input
           name="amount"
           type="number"
+          inputMode="decimal"
           min="0.01"
           step="0.01"
           required
           placeholder="0.00"
+          autoFocus
           className="field"
         />
       </label>
@@ -63,17 +75,17 @@ export function ExpenseForm({
           className="field"
         />
       </label>
-      <label className="grid gap-1 text-sm sm:col-span-2 lg:col-span-1">
+      <label className="grid gap-1 text-sm sm:col-span-2">
         <span className="text-muted">Note</span>
         <input name="note" maxLength={500} placeholder="Optional" className="field" />
       </label>
-      <div className="flex items-end">
+      <div className="sm:col-span-2">
         <button type="submit" disabled={pending} className="btn-primary w-full">
           {pending ? "Saving…" : submitLabel}
         </button>
       </div>
       {state?.error ? (
-        <p className="text-sm text-danger sm:col-span-2 lg:col-span-6">{state.error}</p>
+        <p className="text-sm text-danger sm:col-span-2">{state.error}</p>
       ) : null}
     </form>
   );

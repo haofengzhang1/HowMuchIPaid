@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import { clearActiveNotebook, isSafeInvitePath, requireEditableOwner } from "@/lib/access";
 import { isCategory } from "@/lib/categories";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
@@ -23,6 +24,18 @@ function formString(formData: FormData, key: string) {
 
 function firstError(error: z.ZodError) {
   return error.issues[0]?.message ?? "Check the form and try again.";
+}
+
+function nextPath(formData: FormData) {
+  const next = formString(formData, "next");
+  return isSafeInvitePath(next) ? next : "/dashboard";
+}
+
+function refreshNotebook() {
+  revalidatePath("/people");
+  revalidatePath("/dashboard");
+  revalidatePath("/expenses");
+  revalidatePath("/sharing");
 }
 
 export async function signUp(
@@ -50,7 +63,7 @@ export async function signUp(
   });
 
   await createSession(user.id);
-  redirect("/dashboard");
+  redirect(nextPath(formData));
 }
 
 export async function logIn(
@@ -72,11 +85,12 @@ export async function logIn(
   if (!ok) return { error: "Email or password is incorrect." };
 
   await createSession(user.id);
-  redirect("/dashboard");
+  redirect(nextPath(formData));
 }
 
 export async function logOut() {
   await destroySession();
+  await clearActiveNotebook();
   redirect("/login");
 }
 
@@ -85,46 +99,44 @@ export async function addPerson(
   formData: FormData,
 ): Promise<ActionState> {
   const user = await requireUser();
+  const ownerId = await requireEditableOwner(user.id);
   const name = formString(formData, "name");
   if (name.length < 1 || name.length > 80) {
     return { error: "Give this person a name." };
   }
 
   const duplicate = await prisma.person.findFirst({
-    where: { ownerId: user.id, name },
+    where: { ownerId, name },
   });
   if (duplicate) return { error: "That name is already on your list." };
 
   await prisma.person.create({
-    data: { ownerId: user.id, name },
+    data: { ownerId, name },
   });
-  revalidatePath("/people");
-  revalidatePath("/dashboard");
-  revalidatePath("/expenses");
+  refreshNotebook();
 }
 
 export async function deletePerson(formData: FormData) {
   const user = await requireUser();
+  const ownerId = await requireEditableOwner(user.id);
   const id = formString(formData, "id");
 
-  const peopleCount = await prisma.person.count({ where: { ownerId: user.id } });
+  const peopleCount = await prisma.person.count({ where: { ownerId } });
   if (peopleCount <= 1) {
     return;
   }
 
   const expenseCount = await prisma.expense.count({
-    where: { ownerId: user.id, personId: id },
+    where: { ownerId, personId: id },
   });
   if (expenseCount > 0) {
     return;
   }
 
   await prisma.person.deleteMany({
-    where: { id, ownerId: user.id },
+    where: { id, ownerId },
   });
-  revalidatePath("/people");
-  revalidatePath("/dashboard");
-  revalidatePath("/expenses");
+  refreshNotebook();
 }
 
 export async function addExpense(
@@ -132,6 +144,7 @@ export async function addExpense(
   formData: FormData,
 ): Promise<ActionState> {
   const user = await requireUser();
+  const ownerId = await requireEditableOwner(user.id);
   const amountRaw = formString(formData, "amount");
   const amount = Number(amountRaw);
   if (!Number.isFinite(amount) || amount <= 0 || amount > 1_000_000_000) {
@@ -140,7 +153,7 @@ export async function addExpense(
 
   const personId = formString(formData, "personId");
   const person = await prisma.person.findFirst({
-    where: { id: personId, ownerId: user.id },
+    where: { id: personId, ownerId },
   });
   if (!person) return { error: "Choose who spent this." };
 
@@ -154,7 +167,7 @@ export async function addExpense(
 
   await prisma.expense.create({
     data: {
-      ownerId: user.id,
+      ownerId,
       personId: person.id,
       amount,
       category,
@@ -163,18 +176,15 @@ export async function addExpense(
     },
   });
 
-  revalidatePath("/dashboard");
-  revalidatePath("/expenses");
-  revalidatePath("/people");
+  refreshNotebook();
 }
 
 export async function deleteExpense(formData: FormData) {
   const user = await requireUser();
+  const ownerId = await requireEditableOwner(user.id);
   const id = formString(formData, "id");
   await prisma.expense.deleteMany({
-    where: { id, ownerId: user.id },
+    where: { id, ownerId },
   });
-  revalidatePath("/dashboard");
-  revalidatePath("/expenses");
-  revalidatePath("/people");
+  refreshNotebook();
 }

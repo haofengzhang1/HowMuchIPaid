@@ -16,7 +16,7 @@ export function PersonForm() {
           <span className="text-muted">Name</span>
           <input name="name" required maxLength={80} placeholder="Alex" className="field" />
         </label>
-        <button type="submit" disabled={pending} className="btn-primary">
+        <button type="submit" disabled={pending} className="btn-primary w-full sm:w-auto">
           {pending ? "Adding…" : "Add person"}
         </button>
       </div>
