@@ -124,16 +124,17 @@ export async function deletePerson(formData: FormData) {
 function parseExpenseFields(formData: FormData) {
   const amount = Number(formString(formData, "amount"));
   if (!Number.isFinite(amount) || amount <= 0 || amount > 1_000_000_000) {
-    return { error: "Enter a valid amount." as const };
+    return { ok: false as const, error: "Enter a valid amount." };
   }
 
   const category = formString(formData, "category");
-  if (!isCategory(category)) return { error: "Choose a category." as const };
+  if (!isCategory(category)) return { ok: false as const, error: "Choose a category." };
 
   const spentAt = parseDateInput(formString(formData, "spentAt"));
-  if (!spentAt) return { error: "Choose a valid date." as const };
+  if (!spentAt) return { ok: false as const, error: "Choose a valid date." };
 
   return {
+    ok: true as const,
     amount,
     personId: formString(formData, "personId"),
     category,
@@ -149,7 +150,7 @@ export async function addExpense(
   const user = await requireUser();
   const ownerId = await requireEditableOwner(user.id);
   const parsed = parseExpenseFields(formData);
-  if ("error" in parsed) return parsed;
+  if (!parsed.ok) return { error: parsed.error };
 
   const person = await prisma.person.findFirst({
     where: { id: parsed.personId, ownerId },
@@ -185,7 +186,7 @@ export async function updateExpense(
   if (!existing) return { error: "That expense is gone." };
 
   const parsed = parseExpenseFields(formData);
-  if ("error" in parsed) return parsed;
+  if (!parsed.ok) return { error: parsed.error };
 
   const person = await prisma.person.findFirst({
     where: { id: parsed.personId, ownerId },
