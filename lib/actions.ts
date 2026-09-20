@@ -121,40 +121,86 @@ export async function deletePerson(formData: FormData) {
   refreshNotebook();
 }
 
+function parseExpenseFields(formData: FormData) {
+  const amount = Number(formString(formData, "amount"));
+  if (!Number.isFinite(amount) || amount <= 0 || amount > 1_000_000_000) {
+    return { error: "Enter a valid amount." as const };
+  }
+
+  const category = formString(formData, "category");
+  if (!isCategory(category)) return { error: "Choose a category." as const };
+
+  const spentAt = parseDateInput(formString(formData, "spentAt"));
+  if (!spentAt) return { error: "Choose a valid date." as const };
+
+  return {
+    amount,
+    personId: formString(formData, "personId"),
+    category,
+    note: formString(formData, "note").slice(0, 500),
+    spentAt,
+  };
+}
+
 export async function addExpense(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
   const user = await requireUser();
   const ownerId = await requireEditableOwner(user.id);
-  const amountRaw = formString(formData, "amount");
-  const amount = Number(amountRaw);
-  if (!Number.isFinite(amount) || amount <= 0 || amount > 1_000_000_000) {
-    return { error: "Enter a valid amount." };
-  }
+  const parsed = parseExpenseFields(formData);
+  if ("error" in parsed) return parsed;
 
-  const personId = formString(formData, "personId");
   const person = await prisma.person.findFirst({
-    where: { id: personId, ownerId },
+    where: { id: parsed.personId, ownerId },
   });
   if (!person) return { error: "Choose who spent this." };
-
-  const category = formString(formData, "category");
-  if (!isCategory(category)) return { error: "Choose a category." };
-
-  const spentAt = parseDateInput(formString(formData, "spentAt"));
-  if (!spentAt) return { error: "Choose a valid date." };
-
-  const note = formString(formData, "note").slice(0, 500);
 
   await prisma.expense.create({
     data: {
       ownerId,
       personId: person.id,
-      amount,
-      category,
-      note,
-      spentAt,
+      amount: parsed.amount,
+      category: parsed.category,
+      note: parsed.note,
+      spentAt: parsed.spentAt,
+    },
+  });
+
+  refreshNotebook();
+}
+
+export async function updateExpense(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const user = await requireUser();
+  const ownerId = await requireEditableOwner(user.id);
+  const ownerIds = await householdOwnerIds(ownerId);
+  const id = formString(formData, "id");
+  const existing = await prisma.expense.findFirst({
+    where: { id, ownerId: { in: ownerIds } },
+    select: { id: true },
+  });
+  if (!existing) return { error: "That expense is gone." };
+
+  const parsed = parseExpenseFields(formData);
+  if ("error" in parsed) return parsed;
+
+  const person = await prisma.person.findFirst({
+    where: { id: parsed.personId, ownerId },
+  });
+  if (!person) return { error: "Choose who spent this." };
+
+  await prisma.expense.update({
+    where: { id: existing.id },
+    data: {
+      ownerId,
+      personId: person.id,
+      amount: parsed.amount,
+      category: parsed.category,
+      note: parsed.note,
+      spentAt: parsed.spentAt,
     },
   });
 

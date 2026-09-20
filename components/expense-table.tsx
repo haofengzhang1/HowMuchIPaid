@@ -1,14 +1,25 @@
+"use client";
+
+import { useState } from "react";
+import { ExpenseDialog } from "@/components/expense-dialog";
+import { ExpenseForm } from "@/components/expense-form";
 import { deleteExpense } from "@/lib/actions";
 import { formatDay, formatMoney } from "@/lib/money";
 import type { ExpenseView } from "@/lib/stats";
 
+type PersonOption = { id: string; name: string };
+
 export function ExpenseTable({
   expenses,
+  people,
   empty,
 }: {
   expenses: ExpenseView[];
+  people: PersonOption[];
   empty: string;
 }) {
+  const [editing, setEditing] = useState<ExpenseView | null>(null);
+
   if (expenses.length === 0) {
     return <p className="text-sm text-muted">{empty}</p>;
   }
@@ -30,12 +41,21 @@ export function ExpenseTable({
                   <p className="mt-1 truncate text-sm text-muted">{expense.note}</p>
                 ) : null}
               </div>
-              <form action={deleteExpense}>
-                <input type="hidden" name="id" value={expense.id} />
-                <button type="submit" className="action-link text-muted hover:text-danger">
-                  Delete
+              <div className="flex shrink-0 flex-col items-end">
+                <button
+                  type="button"
+                  className="action-link text-accent"
+                  onClick={() => setEditing(expense)}
+                >
+                  Edit
                 </button>
-              </form>
+                <form action={deleteExpense}>
+                  <input type="hidden" name="id" value={expense.id} />
+                  <button type="submit" className="action-link text-muted hover:text-danger">
+                    Delete
+                  </button>
+                </form>
+              </div>
             </div>
           </li>
         ))}
@@ -64,18 +84,39 @@ export function ExpenseTable({
                   {formatMoney(expense.amount, expense.currency)}
                 </td>
                 <td className="py-2 text-right">
-                  <form action={deleteExpense}>
-                    <input type="hidden" name="id" value={expense.id} />
-                    <button type="submit" className="text-xs text-muted hover:text-danger">
-                      Delete
+                  <div className="flex items-center justify-end gap-3">
+                    <button
+                      type="button"
+                      className="text-xs text-accent"
+                      onClick={() => setEditing(expense)}
+                    >
+                      Edit
                     </button>
-                  </form>
+                    <form action={deleteExpense}>
+                      <input type="hidden" name="id" value={expense.id} />
+                      <button type="submit" className="text-xs text-muted hover:text-danger">
+                        Delete
+                      </button>
+                    </form>
+                  </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {editing ? (
+        <ExpenseDialog title="Edit expense" onClose={() => setEditing(null)}>
+          <ExpenseForm
+            key={editing.id}
+            people={people}
+            expense={editing}
+            submitLabel="Save"
+            onSaved={() => setEditing(null)}
+          />
+        </ExpenseDialog>
+      ) : null}
     </>
   );
 }

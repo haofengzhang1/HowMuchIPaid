@@ -6,12 +6,19 @@ export function formatMoney(amount: number, currency = "USD") {
   }).format(amount);
 }
 
-export function todayInputValue() {
-  const date = new Date();
+export function dateInputValue(date = new Date()) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
+}
+
+export function todayInputValue() {
+  return dateInputValue(new Date());
+}
+
+export function isoToDateInput(iso: string) {
+  return dateInputValue(new Date(iso));
 }
 
 export function parseDateInput(value: string) {

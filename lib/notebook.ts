@@ -29,6 +29,11 @@ export async function getNotebook(ownerId: string, currentUserId?: string) {
     }),
   ]);
 
+  const peopleByUserId = new Map(
+    people.filter((person) => person.userId).map((person) => [person.userId as string, person.id]),
+  );
+  const peopleByName = new Map(people.map((person) => [person.name, person.id]));
+
   const expenseViews: ExpenseView[] = expenses.map((expense) => ({
     id: expense.id,
     amount: Number(expense.amount),
@@ -36,7 +41,10 @@ export async function getNotebook(ownerId: string, currentUserId?: string) {
     category: expense.category,
     note: expense.note,
     spentAt: expense.spentAt.toISOString(),
-    personId: expense.personId,
+    personId:
+      (expense.person.userId ? peopleByUserId.get(expense.person.userId) : undefined) ??
+      peopleByName.get(expense.person.name) ??
+      expense.personId,
     personName: currentUserId
       ? personLabel(expense.person, currentUserId)
       : expense.person.name,
