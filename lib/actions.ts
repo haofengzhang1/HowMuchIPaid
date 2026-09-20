@@ -58,8 +58,10 @@ export async function signUp(
     data: {
       email: parsed.data.email,
       passwordHash,
-      people: { create: { name: "Me" } },
     },
+  });
+  await prisma.person.create({
+    data: { ownerId: user.id, name: user.email, userId: user.id },
   });
 
   await createSession(user.id);
@@ -94,47 +96,23 @@ export async function logOut() {
   redirect("/login");
 }
 
-export async function addPerson(
-  _prev: ActionState,
-  formData: FormData,
-): Promise<ActionState> {
-  const user = await requireUser();
-  const ownerId = await requireEditableOwner(user.id);
-  const name = formString(formData, "name");
-  if (name.length < 1 || name.length > 80) {
-    return { error: "Give this person a name." };
-  }
-
-  const duplicate = await prisma.person.findFirst({
-    where: { ownerId, name },
-  });
-  if (duplicate) return { error: "That name is already on your list." };
-
-  await prisma.person.create({
-    data: { ownerId, name },
-  });
-  refreshNotebook();
-}
-
 export async function deletePerson(formData: FormData) {
   const user = await requireUser();
   const ownerId = await requireEditableOwner(user.id);
   const id = formString(formData, "id");
 
-  const peopleCount = await prisma.person.count({ where: { ownerId } });
-  if (peopleCount <= 1) {
-    return;
-  }
+  const person = await prisma.person.findFirst({
+    where: { id, ownerId, userId: null },
+  });
+  if (!person) return;
 
   const expenseCount = await prisma.expense.count({
     where: { ownerId, personId: id },
   });
-  if (expenseCount > 0) {
-    return;
-  }
+  if (expenseCount > 0) return;
 
   await prisma.person.deleteMany({
-    where: { id, ownerId },
+    where: { id, ownerId, userId: null },
   });
   refreshNotebook();
 }

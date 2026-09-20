@@ -6,7 +6,7 @@ import { getNotebook } from "@/lib/notebook";
 export default async function ExpensesPage() {
   const user = await requireUser();
   const notebook = await getActiveNotebook(user);
-  const { expenses } = await getNotebook(notebook.ownerId);
+  const { expenses } = await getNotebook(notebook.ownerId, user.id);
 
   return (
     <main className="grid gap-4 sm:gap-5">

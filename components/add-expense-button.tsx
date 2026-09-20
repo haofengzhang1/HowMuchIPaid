@@ -5,7 +5,13 @@ import { ExpenseForm } from "@/components/expense-form";
 
 type PersonOption = { id: string; name: string };
 
-export function AddExpenseButton({ people }: { people: PersonOption[] }) {
+export function AddExpenseButton({
+  people,
+  defaultPersonId,
+}: {
+  people: PersonOption[];
+  defaultPersonId?: string;
+}) {
   const [open, setOpen] = useState(false);
   const titleId = useId();
 
@@ -50,7 +56,12 @@ export function AddExpenseButton({ people }: { people: PersonOption[] }) {
                 Close
               </button>
             </div>
-            <ExpenseForm people={people} submitLabel="Add" onSaved={() => setOpen(false)} />
+            <ExpenseForm
+              people={people}
+              defaultPersonId={defaultPersonId}
+              submitLabel="Add"
+              onSaved={() => setOpen(false)}
+            />
           </div>
         </div>
       ) : null}

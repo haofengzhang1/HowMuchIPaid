@@ -11,6 +11,7 @@ import {
   setActiveNotebook,
 } from "@/lib/access";
 import { requireUser } from "@/lib/auth";
+import { ensurePerson, removeUnusedPerson } from "@/lib/participants";
 import { prisma } from "@/lib/prisma";
 
 export type ShareState = { error: string } | { url: string } | undefined;
@@ -76,6 +77,7 @@ export async function createInvite(
 
   refreshSharing();
   const origin = await getInviteOrigin();
+  await ensurePerson(user.id, { email: parsed.data, userId: existingUser?.id });
   return { url: `${origin}${invitePath(invite.token)}` };
 }
 
@@ -97,6 +99,7 @@ export async function acceptInvite(formData: FormData) {
   }
 
   await grantShare(invite.ownerId, user.id);
+  await ensurePerson(invite.ownerId, { email: user.email, userId: user.id });
   if (invite.status === "pending") {
     await prisma.invite.update({
       where: { id: invite.id },
@@ -121,19 +124,29 @@ export async function declineInvite(formData: FormData) {
 export async function revokeInvite(formData: FormData) {
   const user = await requireUser();
   const id = formString(formData, "id");
-  await prisma.invite.updateMany({
+  const invite = await prisma.invite.findFirst({
     where: { id, ownerId: user.id, status: "pending" },
+  });
+  if (!invite) return;
+  await prisma.invite.update({
+    where: { id: invite.id },
     data: { status: "revoked" },
   });
+  await removeUnusedPerson(user.id, invite.email);
   refreshSharing();
 }
 
 export async function removeMember(formData: FormData) {
   const user = await requireUser();
   const memberId = formString(formData, "memberId");
+  const member = await prisma.user.findUnique({
+    where: { id: memberId },
+    select: { email: true },
+  });
   await prisma.notebookShare.deleteMany({
     where: { ownerId: user.id, memberId },
   });
+  if (member) await removeUnusedPerson(user.id, member.email);
   refreshSharing();
 }
 
@@ -143,6 +156,7 @@ export async function leaveNotebook(formData: FormData) {
   await prisma.notebookShare.deleteMany({
     where: { ownerId, memberId: user.id },
   });
+  await removeUnusedPerson(ownerId, user.email);
   await setActiveNotebook(user.id);
   refreshSharing();
 }

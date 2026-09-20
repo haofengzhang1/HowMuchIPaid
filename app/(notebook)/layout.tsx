@@ -3,6 +3,7 @@ import { AddExpenseButton } from "@/components/add-expense-button";
 import { AppNav } from "@/components/app-nav";
 import { getActiveNotebook } from "@/lib/access";
 import { requireUser } from "@/lib/auth";
+import { ensureNotebookPeople, personLabel } from "@/lib/participants";
 import { prisma } from "@/lib/prisma";
 
 export default async function NotebookLayout({
@@ -12,11 +13,18 @@ export default async function NotebookLayout({
 }) {
   const user = await requireUser();
   const notebook = await getActiveNotebook(user);
+  await ensureNotebookPeople(notebook.ownerId);
   const people = await prisma.person.findMany({
     where: { ownerId: notebook.ownerId },
     orderBy: { createdAt: "asc" },
-    select: { id: true, name: true },
+    select: { id: true, name: true, userId: true },
   });
+  const options = people.map((person) => ({
+    id: person.id,
+    name: personLabel(person, user.id),
+  }));
+  const defaultPersonId =
+    people.find((person) => person.userId === user.id)?.id ?? people[0]?.id ?? "";
 
   return (
     <div className="min-h-dvh">
@@ -26,7 +34,7 @@ export default async function NotebookLayout({
         activeOwnerId={notebook.ownerId}
       />
       <div className="mx-auto max-w-5xl px-4 py-4 pb-28 md:py-6 md:pb-8">{children}</div>
-      <AddExpenseButton people={people} />
+      <AddExpenseButton people={options} defaultPersonId={defaultPersonId} />
     </div>
   );
 }

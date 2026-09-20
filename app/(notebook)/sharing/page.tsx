@@ -42,7 +42,7 @@ export default async function SharingPage() {
       <div>
         <h1 className="text-xl font-semibold sm:text-2xl">Sharing</h1>
         <p className="mt-1 text-sm text-muted">
-          Invite someone to your log. After they accept, they can see and change it.
+          Invite someone to this log. They appear under Who right away. After they accept, they can see and change expenses.
         </p>
       </div>
 

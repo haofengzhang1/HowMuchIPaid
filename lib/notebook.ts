@@ -1,15 +1,18 @@
 import { prisma } from "@/lib/prisma";
+import { ensureNotebookPeople, personLabel } from "@/lib/participants";
 import type { ExpenseView } from "@/lib/stats";
 
-export async function getNotebook(userId: string) {
+export async function getNotebook(ownerId: string, currentUserId?: string) {
+  await ensureNotebookPeople(ownerId);
+
   const [people, expenses] = await Promise.all([
     prisma.person.findMany({
-      where: { ownerId: userId },
+      where: { ownerId },
       orderBy: { createdAt: "asc" },
       include: { _count: { select: { expenses: true } } },
     }),
     prisma.expense.findMany({
-      where: { ownerId: userId },
+      where: { ownerId },
       include: { person: true },
       orderBy: [{ spentAt: "desc" }, { createdAt: "desc" }],
     }),
@@ -23,7 +26,9 @@ export async function getNotebook(userId: string) {
     note: expense.note,
     spentAt: expense.spentAt.toISOString(),
     personId: expense.personId,
-    personName: expense.person.name,
+    personName: currentUserId
+      ? personLabel(expense.person, currentUserId)
+      : expense.person.name,
   }));
 
   return { people, expenses: expenseViews };

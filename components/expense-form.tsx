@@ -9,10 +9,12 @@ type PersonOption = { id: string; name: string };
 
 export function ExpenseForm({
   people,
+  defaultPersonId,
   submitLabel = "Save expense",
   onSaved,
 }: {
   people: PersonOption[];
+  defaultPersonId?: string;
   submitLabel?: string;
   onSaved?: () => void;
 }) {
@@ -28,6 +30,14 @@ export function ExpenseForm({
     }
     wasPending.current = pending;
   }, [pending, state, onSaved]);
+
+  if (people.length === 0) {
+    return (
+      <p className="text-sm text-muted">
+        Invite someone from People before adding an expense.
+      </p>
+    );
+  }
 
   return (
     <form action={action} className="grid gap-3 sm:grid-cols-2">
@@ -47,7 +57,12 @@ export function ExpenseForm({
       </label>
       <label className="grid gap-1 text-sm">
         <span className="text-muted">Who</span>
-        <select name="personId" required className="field" defaultValue={people[0]?.id ?? ""}>
+        <select
+          name="personId"
+          required
+          className="field"
+          defaultValue={defaultPersonId ?? people[0]?.id ?? ""}
+        >
           {people.map((person) => (
             <option key={person.id} value={person.id}>
               {person.name}

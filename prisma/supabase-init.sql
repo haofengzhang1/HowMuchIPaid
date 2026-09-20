@@ -13,14 +13,19 @@ CREATE UNIQUE INDEX IF NOT EXISTS "users_email_key" ON "users"("email");
 CREATE TABLE IF NOT EXISTS "people" (
   "id" TEXT PRIMARY KEY,
   "owner_id" TEXT NOT NULL,
+  "user_id" TEXT,
   "name" TEXT NOT NULL,
   "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT "people_owner_id_fkey"
     FOREIGN KEY ("owner_id") REFERENCES "users"("id")
-    ON DELETE CASCADE ON UPDATE CASCADE
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT "people_user_id_fkey"
+    FOREIGN KEY ("user_id") REFERENCES "users"("id")
+    ON DELETE SET NULL ON UPDATE CASCADE
 );
 
 CREATE INDEX IF NOT EXISTS "people_owner_id_idx" ON "people"("owner_id");
+CREATE INDEX IF NOT EXISTS "people_user_id_idx" ON "people"("user_id");
 
 CREATE TABLE IF NOT EXISTS "expenses" (
   "id" TEXT PRIMARY KEY,

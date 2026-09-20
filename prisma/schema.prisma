@@ -9,15 +9,16 @@ datasource db {
 }
 
 model User {
-  id           String    @id @default(cuid())
-  email        String    @unique
-  passwordHash String    @map("password_hash")
-  createdAt    DateTime  @default(now()) @map("created_at")
-  people       Person[]
-  expenses     Expense[]
-  invitesSent  Invite[]        @relation("InvitesSent")
-  sharesOwned  NotebookShare[] @relation("SharesOwned")
-  sharesJoined NotebookShare[] @relation("SharesJoined")
+  id            String          @id @default(cuid())
+  email         String          @unique
+  passwordHash  String          @map("password_hash")
+  createdAt     DateTime        @default(now()) @map("created_at")
+  people        Person[]        @relation("OwnedPeople")
+  asPerson      Person[]        @relation("PersonAccount")
+  expenses      Expense[]
+  invitesSent   Invite[]        @relation("InvitesSent")
+  sharesOwned   NotebookShare[] @relation("SharesOwned")
+  sharesJoined  NotebookShare[] @relation("SharesJoined")
 
   @@map("users")
 }
@@ -52,12 +53,15 @@ model NotebookShare {
 model Person {
   id        String    @id @default(cuid())
   ownerId   String    @map("owner_id")
-  owner     User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  owner     User      @relation("OwnedPeople", fields: [ownerId], references: [id], onDelete: Cascade)
+  userId    String?   @map("user_id")
+  user      User?     @relation("PersonAccount", fields: [userId], references: [id], onDelete: SetNull)
   name      String
   createdAt DateTime  @default(now()) @map("created_at")
   expenses  Expense[]
 
   @@index([ownerId])
+  @@index([userId])
   @@map("people")
 }
 

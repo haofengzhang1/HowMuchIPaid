@@ -23,7 +23,7 @@ export default async function DashboardPage({
 }) {
   const user = await requireUser();
   const notebook = await getActiveNotebook(user);
-  const { expenses } = await getNotebook(notebook.ownerId);
+  const { expenses } = await getNotebook(notebook.ownerId, user.id);
   const { range: rangeRaw } = await searchParams;
   const range = parseRange(rangeRaw);
   const lifetime = buildStats(expenses);
