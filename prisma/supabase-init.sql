@@ -81,3 +81,24 @@ CREATE TABLE IF NOT EXISTS "notebook_shares" (
 CREATE UNIQUE INDEX IF NOT EXISTS "notebook_shares_owner_id_member_id_key"
   ON "notebook_shares"("owner_id", "member_id");
 CREATE INDEX IF NOT EXISTS "notebook_shares_member_id_idx" ON "notebook_shares"("member_id");
+
+CREATE TABLE IF NOT EXISTS "chat_messages" (
+  "id" TEXT PRIMARY KEY,
+  "sender_id" TEXT NOT NULL,
+  "recipient_id" TEXT NOT NULL,
+  "body" TEXT NOT NULL,
+  "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "chat_messages_sender_id_fkey"
+    FOREIGN KEY ("sender_id") REFERENCES "users"("id")
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT "chat_messages_recipient_id_fkey"
+    FOREIGN KEY ("recipient_id") REFERENCES "users"("id")
+    ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS "chat_messages_sender_id_created_at_idx"
+  ON "chat_messages"("sender_id", "created_at");
+CREATE INDEX IF NOT EXISTS "chat_messages_recipient_id_created_at_idx"
+  ON "chat_messages"("recipient_id", "created_at");
+CREATE INDEX IF NOT EXISTS "chat_messages_sender_id_recipient_id_created_at_idx"
+  ON "chat_messages"("sender_id", "recipient_id", "created_at");

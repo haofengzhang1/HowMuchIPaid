@@ -10,6 +10,7 @@ const links = [
   { href: "/expenses", label: "Expenses" },
   { href: "/people", label: "People" },
   { href: "/sharing", label: "Sharing" },
+  { href: "/chat", label: "Chat" },
 ];
 
 type NotebookOption = { ownerId: string; email: string; isOwn: boolean };
@@ -60,7 +61,8 @@ export function AppNav({
             ) : null}
             <nav className="hidden items-center gap-1 md:flex">
               {links.map((link) => {
-                const isActive = pathname === link.href;
+                const isActive =
+                  pathname === link.href || (link.href !== "/dashboard" && pathname.startsWith(link.href));
                 return (
                   <Link
                     key={link.href}
@@ -87,9 +89,10 @@ export function AppNav({
           </div>
         </div>
       </header>
-      <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-4 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-5 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] md:hidden">
         {links.map((link) => {
-          const isActive = pathname === link.href;
+          const isActive =
+            pathname === link.href || (link.href !== "/dashboard" && pathname.startsWith(link.href));
           return (
             <Link
               key={link.href}

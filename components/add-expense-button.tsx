@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import { ExpenseDialog } from "@/components/expense-dialog";
 import { ExpenseForm } from "@/components/expense-form";
 
@@ -14,6 +15,8 @@ export function AddExpenseButton({
   defaultPersonId?: string;
 }) {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+  if (pathname.startsWith("/chat")) return null;
 
   return (
     <>

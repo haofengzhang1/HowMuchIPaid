@@ -9,16 +9,18 @@ datasource db {
 }
 
 model User {
-  id            String          @id @default(cuid())
-  email         String          @unique
-  passwordHash  String          @map("password_hash")
-  createdAt     DateTime        @default(now()) @map("created_at")
-  people        Person[]        @relation("OwnedPeople")
-  asPerson      Person[]        @relation("PersonAccount")
-  expenses      Expense[]
-  invitesSent   Invite[]        @relation("InvitesSent")
-  sharesOwned   NotebookShare[] @relation("SharesOwned")
-  sharesJoined  NotebookShare[] @relation("SharesJoined")
+  id               String          @id @default(cuid())
+  email            String          @unique
+  passwordHash     String          @map("password_hash")
+  createdAt        DateTime        @default(now()) @map("created_at")
+  people           Person[]        @relation("OwnedPeople")
+  asPerson         Person[]        @relation("PersonAccount")
+  expenses         Expense[]
+  invitesSent      Invite[]        @relation("InvitesSent")
+  sharesOwned      NotebookShare[] @relation("SharesOwned")
+  sharesJoined     NotebookShare[] @relation("SharesJoined")
+  messagesSent     ChatMessage[]   @relation("MessagesSent")
+  messagesReceived ChatMessage[]   @relation("MessagesReceived")
 
   @@map("users")
 }
@@ -82,4 +84,19 @@ model Expense {
   @@index([personId])
   @@index([spentAt])
   @@map("expenses")
+}
+
+model ChatMessage {
+  id          String   @id @default(cuid())
+  senderId    String   @map("sender_id")
+  sender      User     @relation("MessagesSent", fields: [senderId], references: [id], onDelete: Cascade)
+  recipientId String   @map("recipient_id")
+  recipient   User     @relation("MessagesReceived", fields: [recipientId], references: [id], onDelete: Cascade)
+  body        String
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([senderId, createdAt])
+  @@index([recipientId, createdAt])
+  @@index([senderId, recipientId, createdAt])
+  @@map("chat_messages")
 }

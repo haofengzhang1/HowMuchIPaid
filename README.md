@@ -12,4 +12,4 @@ Log spending for yourself and other people. Accounts and expenses are stored in 
 
 Sign up at http://localhost:3000. New accounts show up in Supabase **Table Editor → users** (`email` and `password_hash`).
 
-Invite another account from **People** or **Sharing**. After they accept, you both see and edit the same log and chart.
+Invite another account from **People** or **Sharing**. After they accept, you both see and edit the same log and chart. You can also text each other from **Chat** (text only, 10 messages per person per day).
