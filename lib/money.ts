@@ -1,5 +1,7 @@
-export function formatMoney(amount: number, currency = "USD") {
-  return new Intl.NumberFormat("en-US", {
+import { localeTag, type Locale } from "@/lib/i18n";
+
+export function formatMoney(amount: number, currency = "USD", locale: Locale = "en") {
+  return new Intl.NumberFormat(localeTag(locale), {
     style: "currency",
     currency,
     maximumFractionDigits: 2,
@@ -42,16 +44,16 @@ export function monthKey(date: Date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
 }
 
-export function formatMonthKey(key: string) {
+export function formatMonthKey(key: string, locale: Locale = "en") {
   const [year, month] = key.split("-").map(Number);
-  return new Date(year, month - 1, 1).toLocaleDateString("en-US", {
+  return new Date(year, month - 1, 1).toLocaleDateString(localeTag(locale), {
     month: "short",
     year: "numeric",
   });
 }
 
-export function formatDay(iso: string) {
-  return new Date(iso).toLocaleDateString("en-US", {
+export function formatDay(iso: string, locale: Locale = "en") {
+  return new Date(iso).toLocaleDateString(localeTag(locale), {
     month: "short",
     day: "numeric",
     year: "numeric",

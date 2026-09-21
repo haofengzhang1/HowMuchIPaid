@@ -2,6 +2,8 @@
 
 import { useEffect, useId, type ReactNode } from "react";
 
+import { useT } from "@/components/locale-provider";
+
 export function ExpenseDialog({
   title,
   onClose,
@@ -12,6 +14,7 @@ export function ExpenseDialog({
   children: ReactNode;
 }) {
   const titleId = useId();
+  const t = useT();
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
@@ -26,7 +29,7 @@ export function ExpenseDialog({
       <button
         type="button"
         className="absolute inset-0 bg-ink/40"
-        aria-label="Close"
+        aria-label={t("close")}
         onClick={onClose}
       />
       <div
@@ -40,7 +43,7 @@ export function ExpenseDialog({
             {title}
           </h2>
           <button type="button" className="action-link text-muted" onClick={onClose}>
-            Close
+            {t("close")}
           </button>
         </div>
         {children}

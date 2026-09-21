@@ -2,6 +2,8 @@ import { CopyButton } from "@/components/copy-button";
 import { InviteForm } from "@/components/invite-form";
 import { getInviteOrigin, invitePath } from "@/lib/access";
 import { requireUser } from "@/lib/auth";
+import { t } from "@/lib/i18n";
+import { getLocale } from "@/lib/locale";
 import { prisma } from "@/lib/prisma";
 import {
   acceptInvite,
@@ -13,6 +15,7 @@ import {
 
 export default async function SharingPage() {
   const user = await requireUser();
+  const locale = await getLocale();
   const origin = await getInviteOrigin();
 
   const [pendingSent, pendingReceived, members, joined] = await Promise.all([
@@ -40,31 +43,30 @@ export default async function SharingPage() {
   return (
     <main className="grid gap-4 sm:gap-5">
       <div>
-        <h1 className="text-xl font-semibold sm:text-2xl">Sharing</h1>
-        <p className="mt-1 text-sm text-muted">
-          Invite someone to this log. After they accept, you both see and edit the same expenses and
-          chart.
-        </p>
+        <h1 className="text-xl font-semibold sm:text-2xl">{t(locale, "sharing")}</h1>
+        <p className="mt-1 text-sm text-muted">{t(locale, "sharingBlurb")}</p>
       </div>
 
       {pendingReceived.length > 0 ? (
         <section className="panel">
-          <h2 className="panel-title">Invites for you</h2>
+          <h2 className="panel-title">{t(locale, "invitesForYou")}</h2>
           <ul className="mt-3 divide-y divide-line">
             {pendingReceived.map((invite) => (
               <li key={invite.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
-                <p className="break-all text-sm">{invite.owner.email} invited you.</p>
+                <p className="break-all text-sm">
+                  {t(locale, "invitedYou", { email: invite.owner.email })}
+                </p>
                 <div className="flex min-h-10 items-center gap-4">
                   <form action={acceptInvite}>
                     <input type="hidden" name="token" value={invite.token} />
                     <button type="submit" className="action-link text-accent">
-                      Accept
+                      {t(locale, "accept")}
                     </button>
                   </form>
                   <form action={declineInvite}>
                     <input type="hidden" name="id" value={invite.id} />
                     <button type="submit" className="action-link text-muted hover:text-danger">
-                      Decline
+                      {t(locale, "decline")}
                     </button>
                   </form>
                 </div>
@@ -75,16 +77,16 @@ export default async function SharingPage() {
       ) : null}
 
       <section className="panel">
-        <h2 className="panel-title">Invite</h2>
+        <h2 className="panel-title">{t(locale, "invite")}</h2>
         <div className="mt-3">
           <InviteForm />
         </div>
       </section>
 
       <section className="panel">
-        <h2 className="panel-title">Waiting</h2>
+        <h2 className="panel-title">{t(locale, "waiting")}</h2>
         {pendingSent.length === 0 ? (
-          <p className="mt-3 text-sm text-muted">No open invites.</p>
+          <p className="mt-3 text-sm text-muted">{t(locale, "noOpenInvites")}</p>
         ) : (
           <ul className="mt-3 divide-y divide-line">
             {pendingSent.map((invite) => {
@@ -96,7 +98,7 @@ export default async function SharingPage() {
                     <form action={revokeInvite}>
                       <input type="hidden" name="id" value={invite.id} />
                       <button type="submit" className="action-link text-muted hover:text-danger">
-                        Cancel
+                        {t(locale, "cancel")}
                       </button>
                     </form>
                   </div>
@@ -112,9 +114,9 @@ export default async function SharingPage() {
       </section>
 
       <section className="panel">
-        <h2 className="panel-title">People with access</h2>
+        <h2 className="panel-title">{t(locale, "peopleWithAccess")}</h2>
         {members.length === 0 ? (
-          <p className="mt-3 text-sm text-muted">Only you can edit this log right now.</p>
+          <p className="mt-3 text-sm text-muted">{t(locale, "onlyYou")}</p>
         ) : (
           <ul className="mt-3 divide-y divide-line">
             {members.map((share) => (
@@ -126,7 +128,7 @@ export default async function SharingPage() {
                 <form action={removeMember}>
                   <input type="hidden" name="memberId" value={share.member.id} />
                   <button type="submit" className="action-link text-muted hover:text-danger">
-                    Remove
+                    {t(locale, "remove")}
                   </button>
                 </form>
               </li>
@@ -136,9 +138,9 @@ export default async function SharingPage() {
       </section>
 
       <section className="panel">
-        <h2 className="panel-title">Shared logs</h2>
+        <h2 className="panel-title">{t(locale, "sharedLogs")}</h2>
         {joined.length === 0 ? (
-          <p className="mt-3 text-sm text-muted">You have not joined a shared log yet.</p>
+          <p className="mt-3 text-sm text-muted">{t(locale, "notJoined")}</p>
         ) : (
           <ul className="mt-3 divide-y divide-line">
             {joined.map((share) => (
@@ -150,7 +152,7 @@ export default async function SharingPage() {
                 <form action={leaveNotebook}>
                   <input type="hidden" name="ownerId" value={share.owner.id} />
                   <button type="submit" className="action-link text-muted hover:text-danger">
-                    Leave
+                    {t(locale, "leave")}
                   </button>
                 </form>
               </li>

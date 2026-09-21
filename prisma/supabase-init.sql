@@ -5,8 +5,23 @@ CREATE TABLE IF NOT EXISTS "users" (
   "id" TEXT PRIMARY KEY,
   "email" TEXT NOT NULL,
   "password_hash" TEXT NOT NULL,
-  "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+  "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "avatar" BYTEA,
+  "avatar_mime" TEXT,
+  "avatar_updated_at" TIMESTAMP(3),
+  "chat_bg_color" TEXT NOT NULL DEFAULT '',
+  "chat_bg" BYTEA,
+  "chat_bg_mime" TEXT,
+  "chat_bg_updated_at" TIMESTAMP(3)
 );
+
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "avatar" BYTEA;
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "avatar_mime" TEXT;
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "avatar_updated_at" TIMESTAMP(3);
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "chat_bg_color" TEXT NOT NULL DEFAULT '';
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "chat_bg" BYTEA;
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "chat_bg_mime" TEXT;
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "chat_bg_updated_at" TIMESTAMP(3);
 
 CREATE UNIQUE INDEX IF NOT EXISTS "users_email_key" ON "users"("email");
 

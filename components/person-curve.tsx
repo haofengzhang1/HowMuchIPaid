@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, type PointerEvent, type ReactNode } from "react";
+import { useLocale, useT } from "@/components/locale-provider";
 import type { ChartBucket, PersonSeries } from "@/lib/stats";
 import { formatMoney } from "@/lib/money";
 
@@ -26,6 +27,8 @@ export function PersonCurve({
   caption: string;
   toolbar?: ReactNode;
 }) {
+  const t = useT();
+  const locale = useLocale();
   const [mode, setMode] = useState<"month" | "total">("total");
   const [hidden, setHidden] = useState<string[]>([]);
   const [active, setActive] = useState(Math.max(0, buckets.length - 1));
@@ -94,37 +97,37 @@ export function PersonCurve({
   return (
     <figure className="panel overflow-hidden">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="panel-title">Spending</h2>
+        <h2 className="panel-title">{t("spending")}</h2>
         <div className="flex gap-1">
           <button
             type="button"
             className={`px-2.5 py-1 text-xs ${mode === "total" ? "bg-accent text-white" : "border border-line"}`}
             onClick={() => setMode("total")}
           >
-            Cumulative
+            {t("cumulative")}
           </button>
           <button
             type="button"
             className={`px-2.5 py-1 text-xs ${mode === "month" ? "bg-accent text-white" : "border border-line"}`}
             onClick={() => setMode("month")}
           >
-            Each period
+            {t("eachPeriod")}
           </button>
         </div>
       </div>
       {series.length === 0 ? (
-        <p className="mt-4 text-sm text-muted">No expenses yet.</p>
+        <p className="mt-4 text-sm text-muted">{t("noExpenses")}</p>
       ) : (
         <>
           <div className="mt-3">
             <p className="text-3xl font-semibold tabular-nums leading-none sm:text-4xl">
-              {formatMoney(quoteValue)}
+              {formatMoney(quoteValue, "USD", locale)}
             </p>
             <p className={`mt-1.5 text-sm tabular-nums ${buckets.length > 1 ? (up ? "text-[#1a7f4b]" : "text-danger") : "text-muted"}`}>
               {buckets.length > 1 ? (
                 <>
                   {up ? "+" : "−"}
-                  {formatMoney(Math.abs(change))}
+                  {formatMoney(Math.abs(change), "USD", locale)}
                   {changePct === null ? "" : ` (${changePct >= 0 ? "+" : ""}${changePct.toFixed(1)}%)`}
                   <span className="text-muted"> · {buckets[active]?.label}</span>
                 </>
@@ -137,7 +140,7 @@ export function PersonCurve({
             viewBox={`0 0 ${width} ${height}`}
             className="mt-3 h-auto w-full max-w-full touch-none"
             role="img"
-            aria-label="Spending chart"
+            aria-label={t("spendingChart")}
             onPointerMove={(event) => setActive(indexFromPointer(event))}
             onPointerDown={(event) => setActive(indexFromPointer(event))}
           >
@@ -148,7 +151,7 @@ export function PersonCurve({
                 <g key={tick}>
                   <line x1={pad.left} x2={width - pad.right} y1={y} y2={y} stroke="#ecece8" />
                   <text x={pad.left - 8} y={y + 4} textAnchor="end" fontSize="10" fill="#5a5a5a">
-                    {labelValue.toLocaleString("en-US", {
+                    {labelValue.toLocaleString(locale === "zh" ? "zh-CN" : "en-US", {
                       maximumFractionDigits: labelValue > 0 && labelValue < 10 ? 1 : 0,
                     })}
                   </text>
@@ -238,9 +241,9 @@ export function PersonCurve({
                       className="inline-block h-2 w-4"
                       style={{ background: off ? "#d2d2cc" : line.color }}
                     />
-                    {line.name}
+                    {line.name === "Total" ? t("total") : line.name}
                     <span className="tabular-nums text-muted">
-                      {formatMoney(line.values[active] ?? 0)}
+                      {formatMoney(line.values[active] ?? 0, "USD", locale)}
                     </span>
                   </button>
                 </li>
@@ -250,7 +253,7 @@ export function PersonCurve({
         </>
       )}
       {toolbar ? <div className="mt-4 border-t border-line pt-2">{toolbar}</div> : null}
-      <p className="mt-2 text-xs text-muted">{caption}. Drag or tap the chart. Tap a name to hide it.</p>
+      <p className="mt-2 text-xs text-muted">{t("chartHint", { caption })}</p>
     </figure>
   );
 }

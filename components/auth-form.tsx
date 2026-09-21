@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { useT } from "@/components/locale-provider";
 import { logIn, signUp, type ActionState } from "@/lib/actions";
 
 export function AuthForm({
@@ -10,6 +11,7 @@ export function AuthForm({
   mode: "login" | "signup";
   next?: string;
 }) {
+  const t = useT();
   const action = mode === "login" ? logIn : signUp;
   const [state, formAction, pending] = useActionState<ActionState, FormData>(
     action,
@@ -20,7 +22,7 @@ export function AuthForm({
     <form action={formAction} className="grid gap-4">
       {next ? <input type="hidden" name="next" value={next} /> : null}
       <label className="grid gap-1 text-sm">
-        <span className="text-muted">Email</span>
+        <span className="text-muted">{t("email")}</span>
         <input
           name="email"
           type="email"
@@ -31,7 +33,7 @@ export function AuthForm({
         />
       </label>
       <label className="grid gap-1 text-sm">
-        <span className="text-muted">Password</span>
+        <span className="text-muted">{t("password")}</span>
         <input
           name="password"
           type="password"
@@ -45,11 +47,11 @@ export function AuthForm({
       <button type="submit" disabled={pending} className="btn-primary w-full">
         {pending
           ? mode === "login"
-            ? "Logging in…"
-            : "Creating account…"
+            ? t("loggingIn")
+            : t("creatingAccount")
           : mode === "login"
-            ? "Log in"
-            : "Create account"}
+            ? t("logIn")
+            : t("createAccount")}
       </button>
     </form>
   );

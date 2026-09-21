@@ -11,12 +11,14 @@ import {
   setActiveNotebook,
 } from "@/lib/access";
 import { requireUser } from "@/lib/auth";
+import { t } from "@/lib/i18n";
+import { getLocale } from "@/lib/locale";
 import { ensurePerson, removeUnusedPerson } from "@/lib/participants";
 import { prisma } from "@/lib/prisma";
 
 export type ShareState = { error: string } | { url: string } | undefined;
 
-const emailSchema = z.email("Enter a valid email.").max(200);
+const emailSchema = z.email().max(200);
 
 function formString(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
@@ -42,12 +44,13 @@ export async function createInvite(
   formData: FormData,
 ): Promise<ShareState> {
   const user = await requireUser();
+  const locale = await getLocale();
   const parsed = emailSchema.safeParse(formString(formData, "email").toLowerCase());
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Enter a valid email." };
+    return { error: t(locale, "errorEmail") };
   }
   if (parsed.data === user.email) {
-    return { error: "You already have access to your own log." };
+    return { error: t(locale, "errorOwnLog") };
   }
 
   const existingUser = await prisma.user.findUnique({
@@ -59,7 +62,7 @@ export async function createInvite(
       where: { ownerId_memberId: { ownerId: user.id, memberId: existingUser.id } },
       select: { id: true },
     });
-    if (already) return { error: "That person already has access." };
+    if (already) return { error: t(locale, "errorHasAccess") };
   }
 
   let invite = await prisma.invite.findFirst({

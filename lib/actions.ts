@@ -6,6 +6,8 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { clearActiveNotebook, getAccessibleNotebooks, householdOwnerIds, isSafeInvitePath, requireEditableOwner, setActiveNotebook } from "@/lib/access";
 import { isCategory } from "@/lib/categories";
+import { t } from "@/lib/i18n";
+import { getLocale } from "@/lib/locale";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { parseDateInput } from "@/lib/money";
@@ -14,16 +16,18 @@ import { createSession, destroySession } from "@/lib/session";
 export type ActionState = { error: string } | undefined;
 
 const credentialsSchema = z.object({
-  email: z.email("Enter a valid email.").max(200),
-  password: z.string().min(8, "Password must be at least 8 characters.").max(100),
+  email: z.email().max(200),
+  password: z.string().min(8).max(100),
 });
 
 function formString(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
 }
 
-function firstError(error: z.ZodError) {
-  return error.issues[0]?.message ?? "Check the form and try again.";
+function firstError(error: z.ZodError, locale: "en" | "zh") {
+  const issue = error.issues[0];
+  if (issue?.path[0] === "password") return t(locale, "errorPassword");
+  return t(locale, "errorEmail");
 }
 
 function nextPath(formData: FormData) {
@@ -42,16 +46,17 @@ export async function signUp(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  const locale = await getLocale();
   const parsed = credentialsSchema.safeParse({
     email: formString(formData, "email").toLowerCase(),
     password: String(formData.get("password") ?? ""),
   });
-  if (!parsed.success) return { error: firstError(parsed.error) };
+  if (!parsed.success) return { error: firstError(parsed.error, locale) };
 
   const existing = await prisma.user.findUnique({
     where: { email: parsed.data.email },
   });
-  if (existing) return { error: "An account with that email already exists." };
+  if (existing) return { error: t(locale, "errorExists") };
 
   const passwordHash = await bcrypt.hash(parsed.data.password, 12);
   const user = await prisma.user.create({
@@ -74,19 +79,20 @@ export async function logIn(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  const locale = await getLocale();
   const parsed = credentialsSchema.safeParse({
     email: formString(formData, "email").toLowerCase(),
     password: String(formData.get("password") ?? ""),
   });
-  if (!parsed.success) return { error: firstError(parsed.error) };
+  if (!parsed.success) return { error: firstError(parsed.error, locale) };
 
   const user = await prisma.user.findUnique({
     where: { email: parsed.data.email },
   });
-  if (!user) return { error: "Email or password is incorrect." };
+  if (!user) return { error: t(locale, "errorLogin") };
 
   const ok = await bcrypt.compare(parsed.data.password, user.passwordHash);
-  if (!ok) return { error: "Email or password is incorrect." };
+  if (!ok) return { error: t(locale, "errorLogin") };
 
   await createSession(user.id);
   const notebooks = await getAccessibleNotebooks(user.id, user.email);
@@ -121,17 +127,17 @@ export async function deletePerson(formData: FormData) {
   refreshNotebook();
 }
 
-function parseExpenseFields(formData: FormData) {
+function parseExpenseFields(formData: FormData, locale: "en" | "zh") {
   const amount = Number(formString(formData, "amount"));
   if (!Number.isFinite(amount) || amount <= 0 || amount > 1_000_000_000) {
-    return { ok: false as const, error: "Enter a valid amount." };
+    return { ok: false as const, error: t(locale, "errorAmount") };
   }
 
   const category = formString(formData, "category");
-  if (!isCategory(category)) return { ok: false as const, error: "Choose a category." };
+  if (!isCategory(category)) return { ok: false as const, error: t(locale, "errorCategory") };
 
   const spentAt = parseDateInput(formString(formData, "spentAt"));
-  if (!spentAt) return { ok: false as const, error: "Choose a valid date." };
+  if (!spentAt) return { ok: false as const, error: t(locale, "errorDate") };
 
   return {
     ok: true as const,
@@ -149,13 +155,14 @@ export async function addExpense(
 ): Promise<ActionState> {
   const user = await requireUser();
   const ownerId = await requireEditableOwner(user.id);
-  const parsed = parseExpenseFields(formData);
+  const locale = await getLocale();
+  const parsed = parseExpenseFields(formData, locale);
   if (!parsed.ok) return { error: parsed.error };
 
   const person = await prisma.person.findFirst({
     where: { id: parsed.personId, ownerId },
   });
-  if (!person) return { error: "Choose who spent this." };
+  if (!person) return { error: t(locale, "errorWho") };
 
   await prisma.expense.create({
     data: {
@@ -183,15 +190,16 @@ export async function updateExpense(
     where: { id, ownerId: { in: ownerIds } },
     select: { id: true },
   });
-  if (!existing) return { error: "That expense is gone." };
+  if (!existing) return { error: t(await getLocale(), "errorGone") };
 
-  const parsed = parseExpenseFields(formData);
+  const locale = await getLocale();
+  const parsed = parseExpenseFields(formData, locale);
   if (!parsed.ok) return { error: parsed.error };
 
   const person = await prisma.person.findFirst({
     where: { id: parsed.personId, ownerId },
   });
-  if (!person) return { error: "Choose who spent this." };
+  if (!person) return { error: t(locale, "errorWho") };
 
   await prisma.expense.update({
     where: { id: existing.id },

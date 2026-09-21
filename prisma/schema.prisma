@@ -13,6 +13,13 @@ model User {
   email            String          @unique
   passwordHash     String          @map("password_hash")
   createdAt        DateTime        @default(now()) @map("created_at")
+  avatar           Bytes?
+  avatarMime       String?         @map("avatar_mime")
+  avatarUpdatedAt  DateTime?       @map("avatar_updated_at")
+  chatBgColor      String          @default("") @map("chat_bg_color")
+  chatBg           Bytes?          @map("chat_bg")
+  chatBgMime       String?         @map("chat_bg_mime")
+  chatBgUpdatedAt  DateTime?       @map("chat_bg_updated_at")
   people           Person[]        @relation("OwnedPeople")
   asPerson         Person[]        @relation("PersonAccount")
   expenses         Expense[]

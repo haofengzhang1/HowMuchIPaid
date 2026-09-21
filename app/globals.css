@@ -30,7 +30,8 @@ html {
 body {
   background: var(--bg);
   color: var(--ink);
-  font-family: var(--font-ibm-plex-sans), ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-ibm-plex-sans), "PingFang SC", "Hiragino Sans GB", "Noto Sans SC",
+    "Microsoft YaHei", ui-sans-serif, system-ui, sans-serif;
   overflow-x: hidden;
 }
 
@@ -108,4 +109,16 @@ textarea {
   min-height: 2.5rem;
   padding: 0.35rem 0;
   font-size: 0.875rem;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }

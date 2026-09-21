@@ -2,31 +2,39 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Avatar } from "@/components/avatar";
+import { LanguageSwitch } from "@/components/language-switch";
+import { useT } from "@/components/locale-provider";
 import { logOut } from "@/lib/actions";
 import { switchNotebook } from "@/lib/share-actions";
 
 const links = [
-  { href: "/dashboard", label: "Overview" },
-  { href: "/expenses", label: "Expenses" },
-  { href: "/people", label: "People" },
-  { href: "/sharing", label: "Sharing" },
-  { href: "/chat", label: "Chat" },
+  { href: "/dashboard", key: "overview" as const },
+  { href: "/expenses", key: "expenses" as const },
+  { href: "/people", key: "people" as const },
+  { href: "/sharing", key: "sharing" as const },
+  { href: "/chat", key: "chat" as const },
 ];
 
 type NotebookOption = { ownerId: string; email: string; isOwn: boolean };
 
 export function AppNav({
+  userId,
   email,
+  avatarVersion,
   notebooks,
   activeOwnerId,
   isShared,
 }: {
+  userId: string;
   email: string;
+  avatarVersion?: string | null;
   notebooks: NotebookOption[];
   activeOwnerId: string;
   isShared?: boolean;
 }) {
   const pathname = usePathname();
+  const t = useT();
 
   return (
     <>
@@ -34,16 +42,21 @@ export function AppNav({
         <div className="mx-auto flex max-w-5xl items-start justify-between gap-3 px-4 py-3">
           <div className="min-w-0">
             <Link href="/dashboard" className="text-base font-semibold">
-              How Much I Paid
+              {t("appName")}
             </Link>
-            <p className="truncate text-xs text-muted">{email}</p>
-            {isShared ? <p className="truncate text-xs text-muted">Shared log</p> : null}
+            <Link href="/account" className="mt-1 flex min-w-0 items-center gap-2">
+              <Avatar userId={userId} name={email} version={avatarVersion} size={28} />
+              <span className="min-w-0">
+                <span className="block truncate text-xs text-muted">{email}</span>
+                {isShared ? <span className="block truncate text-xs text-muted">{t("sharedLog")}</span> : null}
+              </span>
+            </Link>
           </div>
           <div className="flex shrink-0 flex-col items-end gap-2">
             {notebooks.length > 1 ? (
               <form action={switchNotebook} key={activeOwnerId}>
                 <label className="flex items-center gap-2 text-xs text-muted">
-                  Log
+                  {t("log")}
                   <select
                     name="ownerId"
                     defaultValue={activeOwnerId}
@@ -52,7 +65,7 @@ export function AppNav({
                   >
                     {notebooks.map((item) => (
                       <option key={item.ownerId} value={item.ownerId}>
-                        {item.isOwn ? "Yours" : item.email}
+                        {item.isOwn ? t("yours") : item.email}
                       </option>
                     ))}
                   </select>
@@ -71,21 +84,25 @@ export function AppNav({
                       isActive ? "bg-accent text-white" : "text-ink hover:bg-bg"
                     }`}
                   >
-                    {link.label}
+                    {t(link.key)}
                   </Link>
                 );
               })}
+              <LanguageSwitch />
               <form action={logOut}>
                 <button type="submit" className="px-2.5 py-1.5 text-sm text-muted hover:text-ink">
-                  Log out
+                  {t("logOut")}
                 </button>
               </form>
             </nav>
-            <form action={logOut} className="md:hidden">
-              <button type="submit" className="action-link text-muted">
-                Log out
-              </button>
-            </form>
+            <div className="flex items-center gap-2 md:hidden">
+              <LanguageSwitch />
+              <form action={logOut}>
+                <button type="submit" className="action-link text-muted">
+                  {t("logOut")}
+                </button>
+              </form>
+            </div>
           </div>
         </div>
       </header>
@@ -101,7 +118,7 @@ export function AppNav({
                 isActive ? "bg-accent text-white" : "text-ink"
               }`}
             >
-              {link.label}
+              {t(link.key)}
             </Link>
           );
         })}

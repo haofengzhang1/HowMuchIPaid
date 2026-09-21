@@ -2,9 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
-import { canChat, sanitizeText, startOfUtcDay } from "@/lib/chat";
+import { canChat, sanitizeText } from "@/lib/chat";
 import { DAILY_TEXT_LIMIT, MAX_TEXT_LENGTH } from "@/lib/chat-limits";
+import { t } from "@/lib/i18n";
+import { getLocale } from "@/lib/locale";
 import { prisma } from "@/lib/prisma";
+import { startOfUserDay } from "@/lib/timezone";
 
 export type ChatState = { error: string } | undefined;
 
@@ -22,27 +25,29 @@ export async function sendChatMessage(
   formData: FormData,
 ): Promise<ChatState> {
   const user = await requireUser();
+  const locale = await getLocale();
   if (hasFileUpload(formData)) {
-    return { error: "Text only. Photos and videos are not allowed." };
+    return { error: t(locale, "errorChatFiles") };
   }
 
   const recipientId = String(formData.get("recipientId") ?? "").trim();
   if (!(await canChat(user.id, recipientId))) {
-    return { error: "You can only text people who share a log with you." };
+    return { error: t(locale, "errorChatShare") };
   }
 
   const body = sanitizeText(String(formData.get("body") ?? ""));
-  if (!body) return { error: "Write a message." };
+  if (!body) return { error: t(locale, "errorChatEmpty") };
   if (body.length > MAX_TEXT_LENGTH) {
-    return { error: `Keep it under ${MAX_TEXT_LENGTH} characters.` };
+    return { error: t(locale, "errorChatLength", { limit: MAX_TEXT_LENGTH }) };
   }
 
+  const since = await startOfUserDay();
   try {
     await prisma.$transaction(async (tx) => {
       const sent = await tx.chatMessage.count({
         where: {
           senderId: user.id,
-          createdAt: { gte: startOfUtcDay() },
+          createdAt: { gte: since },
         },
       });
       if (sent >= DAILY_TEXT_LIMIT) {
@@ -58,7 +63,7 @@ export async function sendChatMessage(
     });
   } catch (error) {
     if (error instanceof Error && error.message === "DAILY_LIMIT") {
-      return { error: `You can send ${DAILY_TEXT_LIMIT} texts per day.` };
+      return { error: t(locale, "errorChatLimit", { limit: DAILY_TEXT_LIMIT }) };
     }
     throw error;
   }

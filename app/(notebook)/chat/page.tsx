@@ -1,7 +1,11 @@
 import Link from "next/link";
+import { Avatar } from "@/components/avatar";
 import { lastMessagesByContact, listChatContacts, sentTodayCount } from "@/lib/chat";
 import { DAILY_TEXT_LIMIT } from "@/lib/chat-limits";
 import { requireUser } from "@/lib/auth";
+import { t } from "@/lib/i18n";
+import { getLocale } from "@/lib/locale";
+import { startOfUserDay } from "@/lib/timezone";
 
 function preview(body: string) {
   const oneLine = body.replace(/\s+/g, " ").trim();
@@ -10,9 +14,10 @@ function preview(body: string) {
 
 export default async function ChatPage() {
   const user = await requireUser();
+  const locale = await getLocale();
   const [contacts, sent] = await Promise.all([
     listChatContacts(user.id),
-    sentTodayCount(user.id),
+    sentTodayCount(user.id, await startOfUserDay()),
   ]);
   const latest = await lastMessagesByContact(
     user.id,
@@ -23,18 +28,16 @@ export default async function ChatPage() {
   return (
     <main className="grid gap-4 sm:gap-5">
       <div>
-        <h1 className="text-xl font-semibold sm:text-2xl">Chat</h1>
+        <h1 className="text-xl font-semibold sm:text-2xl">{t(locale, "chat")}</h1>
         <p className="mt-1 text-sm text-muted">
-          Text people who share a log with you. Text only, {DAILY_TEXT_LIMIT} messages per day.
+          {t(locale, "chatBlurb", { limit: DAILY_TEXT_LIMIT })}
         </p>
       </div>
 
       <section className="panel">
-        <h2 className="panel-title">Conversations</h2>
+        <h2 className="panel-title">{t(locale, "conversations")}</h2>
         {contacts.length === 0 ? (
-          <p className="mt-3 text-sm text-muted">
-            Invite someone from Sharing. After they accept, you can text each other here.
-          </p>
+          <p className="mt-3 text-sm text-muted">{t(locale, "chatEmpty")}</p>
         ) : (
           <ul className="mt-2 divide-y divide-line">
             {contacts.map((contact) => {
@@ -45,15 +48,24 @@ export default async function ChatPage() {
                     href={`/chat/${contact.id}`}
                     className="flex min-h-12 items-center justify-between gap-3 py-3"
                   >
-                    <span className="min-w-0">
-                      <span className="block truncate font-medium">{contact.email}</span>
-                      <span className="block truncate text-sm text-muted">
-                        {last
-                          ? `${last.fromMe ? "You: " : ""}${preview(last.body)}`
-                          : "No messages yet"}
+                    <span className="flex min-w-0 items-center gap-3">
+                      <Avatar
+                        userId={contact.id}
+                        name={contact.email}
+                        version={contact.avatarUpdatedAt?.getTime() ?? null}
+                      />
+                      <span className="min-w-0">
+                        <span className="block truncate font-medium">{contact.email}</span>
+                        <span className="block truncate text-sm text-muted">
+                          {last
+                            ? last.fromMe
+                              ? t(locale, "youPrefix", { body: preview(last.body) })
+                              : preview(last.body)
+                            : t(locale, "noMessages")}
+                        </span>
                       </span>
                     </span>
-                    <span className="text-sm text-accent">Open</span>
+                    <span className="text-sm text-accent">{t(locale, "open")}</span>
                   </Link>
                 </li>
               );
@@ -61,7 +73,7 @@ export default async function ChatPage() {
           </ul>
         )}
         <p className="mt-3 text-xs text-muted">
-          {remaining} of {DAILY_TEXT_LIMIT} texts left today
+          {t(locale, "textsLeft", { remaining, limit: DAILY_TEXT_LIMIT })}
         </p>
       </section>
     </main>

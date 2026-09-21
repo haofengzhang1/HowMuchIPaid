@@ -8,7 +8,13 @@ export async function getCurrentUser() {
 
   return prisma.user.findUnique({
     where: { id: userId },
-    select: { id: true, email: true },
+    select: {
+      id: true,
+      email: true,
+      avatarUpdatedAt: true,
+      chatBgColor: true,
+      chatBgUpdatedAt: true,
+    },
   });
 }
 

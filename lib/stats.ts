@@ -1,3 +1,4 @@
+import { localeTag, type Locale } from "@/lib/i18n";
 import { formatMonthKey, monthKey } from "@/lib/money";
 
 export type ExpenseView = {
@@ -67,7 +68,7 @@ export function rangeCaption(range: RangeKey) {
   return RANGES.find((item) => item.id === range)?.caption ?? "Last 30 days";
 }
 
-function dailyBuckets(days: number, now: Date): ChartBucket[] {
+function dailyBuckets(days: number, now: Date, locale: Locale): ChartBucket[] {
   const today = startOfDay(now);
   return Array.from({ length: days }, (_, index) => {
     const start = addDays(today, index - (days - 1));
@@ -75,7 +76,7 @@ function dailyBuckets(days: number, now: Date): ChartBucket[] {
       key: `${start.getFullYear()}-${start.getMonth() + 1}-${start.getDate()}`,
       label:
         days <= 7
-          ? start.toLocaleDateString("en-US", { weekday: "short" })
+          ? start.toLocaleDateString(localeTag(locale), { weekday: "short" })
           : `${start.getMonth() + 1}/${start.getDate()}`,
       start,
       end: addDays(start, 1),
@@ -97,13 +98,13 @@ function weeklyBuckets(weeks: number, now: Date): ChartBucket[] {
   });
 }
 
-function monthlyBuckets(count: number, now: Date, fromYearStart = false): ChartBucket[] {
+function monthlyBuckets(count: number, now: Date, locale: Locale, fromYearStart = false): ChartBucket[] {
   const startMonth = fromYearStart ? 0 : now.getMonth() - (count - 1);
   return Array.from({ length: count }, (_, index) => {
     const date = new Date(now.getFullYear(), startMonth + index, 1);
     return {
       key: monthKey(date),
-      label: date.toLocaleDateString("en-US", { month: "short" }),
+      label: date.toLocaleDateString(localeTag(locale), { month: "short" }),
       start: date,
       end: new Date(date.getFullYear(), date.getMonth() + 1, 1),
     };
@@ -123,18 +124,23 @@ function yearlyBuckets(startYear: number, now: Date): ChartBucket[] {
   });
 }
 
-export function chartBuckets(range: RangeKey, now = new Date(), firstSpend?: Date): ChartBucket[] {
-  if (range === "1w") return dailyBuckets(7, now);
-  if (range === "1m") return dailyBuckets(30, now);
+export function chartBuckets(
+  range: RangeKey,
+  now = new Date(),
+  firstSpend?: Date,
+  locale: Locale = "en",
+): ChartBucket[] {
+  if (range === "1w") return dailyBuckets(7, now, locale);
+  if (range === "1m") return dailyBuckets(30, now, locale);
   if (range === "3m") return weeklyBuckets(13, now);
   if (range === "6m") return weeklyBuckets(26, now);
-  if (range === "1y") return monthlyBuckets(12, now);
+  if (range === "1y") return monthlyBuckets(12, now, locale);
   if (range === "ytd") {
     const start = new Date(now.getFullYear(), 0, 1);
     const days = Math.round((startOfDay(now).getTime() - start.getTime()) / 86_400_000) + 1;
-    if (days <= 31) return dailyBuckets(days, now);
+    if (days <= 31) return dailyBuckets(days, now, locale);
     if (days <= 120) return weeklyBuckets(Math.max(1, Math.ceil(days / 7)), now);
-    return monthlyBuckets(now.getMonth() + 1, now, true);
+    return monthlyBuckets(now.getMonth() + 1, now, locale, true);
   }
 
   const start = firstSpend
@@ -143,7 +149,7 @@ export function chartBuckets(range: RangeKey, now = new Date(), firstSpend?: Dat
   const months =
     (now.getFullYear() - start.getFullYear()) * 12 + now.getMonth() - start.getMonth() + 1;
   if (months > 36) return yearlyBuckets(start.getFullYear(), now);
-  return monthlyBuckets(Math.max(1, months), now);
+  return monthlyBuckets(Math.max(1, months), now, locale);
 }
 
 export function priorWindow(buckets: ChartBucket[]) {
@@ -181,7 +187,7 @@ export function buildPersonSeries(expenses: ExpenseView[], buckets: ChartBucket[
   return [total, ...people];
 }
 
-export function buildStats(expenses: ExpenseView[]) {
+export function buildStats(expenses: ExpenseView[], locale: Locale = "en") {
   const now = new Date();
   const thisMonthStart = startOfMonth(now);
 
@@ -212,7 +218,7 @@ export function buildStats(expenses: ExpenseView[]) {
     const date = new Date(now.getFullYear(), now.getMonth() - offset, 1);
     const key = monthKey(date);
     months.push({
-      label: formatMonthKey(key),
+      label: formatMonthKey(key, locale),
       value: byMonthMap.get(key) ?? 0,
     });
   }

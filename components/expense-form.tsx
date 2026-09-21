@@ -4,6 +4,8 @@ import { useActionState, useEffect, useRef } from "react";
 import { addExpense, updateExpense, type ActionState } from "@/lib/actions";
 import { CATEGORIES, isCategory } from "@/lib/categories";
 import { isoToDateInput, todayInputValue } from "@/lib/money";
+import { categoryLabel } from "@/lib/i18n";
+import { useLocale, useT } from "@/components/locale-provider";
 
 type PersonOption = { id: string; name: string };
 
@@ -20,7 +22,7 @@ export function ExpenseForm({
   people,
   defaultPersonId,
   expense,
-  submitLabel = "Save expense",
+  submitLabel,
   onSaved,
 }: {
   people: PersonOption[];
@@ -29,6 +31,8 @@ export function ExpenseForm({
   submitLabel?: string;
   onSaved?: () => void;
 }) {
+  const t = useT();
+  const locale = useLocale();
   const [state, action, pending] = useActionState<ActionState, FormData>(
     expense ? updateExpense : addExpense,
     undefined,
@@ -47,7 +51,7 @@ export function ExpenseForm({
   if (people.length === 0) {
     return (
       <p className="text-sm text-muted">
-        Invite someone from People before adding an expense.
+        {t("inviteFirst")}
       </p>
     );
   }
@@ -56,7 +60,7 @@ export function ExpenseForm({
     <form action={action} className="grid gap-3 sm:grid-cols-2">
       {expense ? <input type="hidden" name="id" value={expense.id} /> : null}
       <label className="grid gap-1 text-sm">
-        <span className="text-muted">Amount</span>
+        <span className="text-muted">{t("amount")}</span>
         <input
           name="amount"
           type="number"
@@ -71,7 +75,7 @@ export function ExpenseForm({
         />
       </label>
       <label className="grid gap-1 text-sm">
-        <span className="text-muted">Who</span>
+        <span className="text-muted">{t("who")}</span>
         <select
           name="personId"
           required
@@ -86,7 +90,7 @@ export function ExpenseForm({
         </select>
       </label>
       <label className="grid gap-1 text-sm">
-        <span className="text-muted">Category</span>
+        <span className="text-muted">{t("category")}</span>
         <select
           name="category"
           required
@@ -95,13 +99,13 @@ export function ExpenseForm({
         >
           {categories.map((category) => (
             <option key={category} value={category}>
-              {category}
+              {categoryLabel(locale, category)}
             </option>
           ))}
         </select>
       </label>
       <label className="grid gap-1 text-sm">
-        <span className="text-muted">Date</span>
+        <span className="text-muted">{t("date")}</span>
         <input
           name="spentAt"
           type="date"
@@ -111,18 +115,18 @@ export function ExpenseForm({
         />
       </label>
       <label className="grid gap-1 text-sm sm:col-span-2">
-        <span className="text-muted">Note</span>
+        <span className="text-muted">{t("note")}</span>
         <input
           name="note"
           maxLength={500}
-          placeholder="Optional"
+          placeholder={t("optional")}
           defaultValue={expense?.note}
           className="field"
         />
       </label>
       <div className="sm:col-span-2">
         <button type="submit" disabled={pending} className="btn-primary w-full">
-          {pending ? "Saving…" : submitLabel}
+          {pending ? t("saving") : (submitLabel ?? t("save"))}
         </button>
       </div>
       {state?.error ? (

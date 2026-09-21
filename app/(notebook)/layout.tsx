@@ -4,6 +4,8 @@ import { AppNav } from "@/components/app-nav";
 import { getActiveNotebook } from "@/lib/access";
 import { requireUser } from "@/lib/auth";
 import { ensureNotebookPeople, personLabel } from "@/lib/participants";
+import { t } from "@/lib/i18n";
+import { getLocale } from "@/lib/locale";
 import { prisma } from "@/lib/prisma";
 
 export default async function NotebookLayout({
@@ -12,6 +14,7 @@ export default async function NotebookLayout({
   children: ReactNode;
 }) {
   const user = await requireUser();
+  const locale = await getLocale();
   const notebook = await getActiveNotebook(user);
   await ensureNotebookPeople(notebook.ownerId);
   const people = await prisma.person.findMany({
@@ -21,7 +24,10 @@ export default async function NotebookLayout({
   });
   const options = people.map((person) => ({
     id: person.id,
-    name: personLabel(person, user.id),
+    name: personLabel(person, user.id, {
+      you: t(locale, "you"),
+      invited: (email) => t(locale, "invitedSuffix", { email }),
+    }),
   }));
   const defaultPersonId =
     people.find((person) => person.userId === user.id)?.id ?? people[0]?.id ?? "";
@@ -29,7 +35,9 @@ export default async function NotebookLayout({
   return (
     <div className="min-h-dvh">
       <AppNav
+        userId={user.id}
         email={user.email}
+        avatarVersion={user.avatarUpdatedAt?.getTime().toString() ?? null}
         notebooks={notebook.notebooks}
         activeOwnerId={notebook.ownerId}
         isShared={notebook.isShared}

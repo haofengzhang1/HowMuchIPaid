@@ -1,9 +1,10 @@
 import { householdOwnerIds } from "@/lib/access";
+import { t, type Locale } from "@/lib/i18n";
 import { ensureNotebookPeople, ensurePerson, personLabel } from "@/lib/participants";
 import { prisma } from "@/lib/prisma";
 import type { ExpenseView } from "@/lib/stats";
 
-export async function getNotebook(ownerId: string, currentUserId?: string) {
+export async function getNotebook(ownerId: string, currentUserId?: string, locale: Locale = "en") {
   await ensureNotebookPeople(ownerId);
   const ownerIds = await householdOwnerIds(ownerId);
 
@@ -46,7 +47,10 @@ export async function getNotebook(ownerId: string, currentUserId?: string) {
       peopleByName.get(expense.person.name) ??
       expense.personId,
     personName: currentUserId
-      ? personLabel(expense.person, currentUserId)
+      ? personLabel(expense.person, currentUserId, {
+          you: t(locale, "you"),
+          invited: (email) => t(locale, "invitedSuffix", { email }),
+        })
       : expense.person.name,
   }));
 

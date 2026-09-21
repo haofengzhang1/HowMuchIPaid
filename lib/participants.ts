@@ -141,8 +141,11 @@ export async function removeUnusedPerson(ownerId: string, email: string) {
 export function personLabel(
   person: { name: string; userId: string | null },
   currentUserId: string,
+  labels?: { you: string; invited: (email: string) => string },
 ) {
-  if (person.userId === currentUserId) return "You";
-  if (!person.userId && person.name.includes("@")) return `${person.name} (invited)`;
+  if (person.userId === currentUserId) return labels?.you ?? "You";
+  if (!person.userId && person.name.includes("@")) {
+    return labels?.invited(person.name) ?? `${person.name} (invited)`;
+  }
   return person.name;
 }

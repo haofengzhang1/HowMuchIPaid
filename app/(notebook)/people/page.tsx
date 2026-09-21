@@ -4,6 +4,8 @@ import { PersonCurve } from "@/components/person-curve";
 import { getActiveNotebook } from "@/lib/access";
 import { deletePerson } from "@/lib/actions";
 import { requireUser } from "@/lib/auth";
+import { t } from "@/lib/i18n";
+import { getLocale } from "@/lib/locale";
 import { formatMoney } from "@/lib/money";
 import { getNotebook } from "@/lib/notebook";
 import { personLabel } from "@/lib/participants";
@@ -11,15 +13,21 @@ import { buildPersonSeries, buildStats, chartBuckets } from "@/lib/stats";
 
 export default async function PeoplePage() {
   const user = await requireUser();
+  const locale = await getLocale();
   const notebook = await getActiveNotebook(user);
-  const { people, expenses } = await getNotebook(notebook.ownerId, user.id);
-  const stats = buildStats(expenses);
+  const labels = {
+    you: t(locale, "you"),
+    invited: (email: string) => t(locale, "invitedSuffix", { email }),
+  };
+  const { people, expenses } = await getNotebook(notebook.ownerId, user.id, locale);
+  const stats = buildStats(expenses, locale);
   const thisMonth = buildStats(
     expenses.filter((expense) => {
       const spent = new Date(expense.spentAt);
       const now = new Date();
       return spent.getFullYear() === now.getFullYear() && spent.getMonth() === now.getMonth();
     }),
+    locale,
   );
   const totals = new Map(stats.byPerson.map((item) => [item.label, item.value]));
   const monthTotals = new Map(thisMonth.byPerson.map((item) => [item.label, item.value]));
@@ -28,7 +36,7 @@ export default async function PeoplePage() {
     if (!earliest || spent < earliest) return spent;
     return earliest;
   }, undefined);
-  const buckets = chartBuckets("all", new Date(), firstSpend);
+  const buckets = chartBuckets("all", new Date(), firstSpend, locale);
   const personSeries = buildPersonSeries(expenses, buckets);
   const expenseCounts = new Map<string, number>();
   for (const expense of expenses) {
@@ -38,18 +46,15 @@ export default async function PeoplePage() {
   return (
     <main className="grid gap-4 sm:gap-5">
       <div>
-        <h1 className="text-xl font-semibold sm:text-2xl">People</h1>
-        <p className="mt-1 text-sm text-muted">
-          Invite an account to share this log. After they accept, you both see the same expenses and
-          chart.
-        </p>
+        <h1 className="text-xl font-semibold sm:text-2xl">{t(locale, "people")}</h1>
+        <p className="mt-1 text-sm text-muted">{t(locale, "peopleBlurb")}</p>
       </div>
 
-      <PersonCurve series={personSeries} buckets={buckets} caption="All time" />
+      <PersonCurve series={personSeries} buckets={buckets} caption={t(locale, "allTime")} />
 
       {notebook.isOwn ? (
         <section className="panel">
-          <h2 className="panel-title">Invite</h2>
+          <h2 className="panel-title">{t(locale, "invite")}</h2>
           <div className="mt-3">
             <InviteForm />
           </div>
@@ -57,10 +62,10 @@ export default async function PeoplePage() {
       ) : null}
 
       <section className="panel">
-        <h2 className="panel-title">On this log</h2>
+        <h2 className="panel-title">{t(locale, "onThisLog")}</h2>
         <ul className="mt-2 divide-y divide-line">
           {people.map((person) => {
-            const label = personLabel(person, user.id);
+            const label = personLabel(person, user.id, labels);
             const isOwner = person.userId === notebook.ownerId;
             const leftover = !person.userId && !person.name.includes("@");
             const count = expenseCounts.get(label) ?? expenseCounts.get(person.name) ?? 0;
@@ -75,21 +80,24 @@ export default async function PeoplePage() {
                 <div>
                   <p className="font-medium break-all">{label}</p>
                   <p className="text-sm text-muted">
-                    {isOwner ? "Owner · " : null}
-                    {count} {count === 1 ? "expense" : "expenses"} ·{" "}
-                    {formatMoney(total)} all time · {share}% · this month{" "}
-                    {formatMoney(monthTotals.get(label) ?? monthTotals.get(person.name) ?? 0)}
+                    {isOwner ? `${t(locale, "owner")} · ` : null}
+                    {t(locale, "peopleStat", {
+                      count: count === 1 ? t(locale, "expenseCountOne") : t(locale, "expenseCount", { count }),
+                      total: formatMoney(total, "USD", locale),
+                      share,
+                      month: formatMoney(monthTotals.get(label) ?? monthTotals.get(person.name) ?? 0, "USD", locale),
+                    })}
                   </p>
                 </div>
                 {canRemove ? (
                   <form action={deletePerson}>
                     <input type="hidden" name="id" value={person.id} />
                     <button type="submit" className="action-link text-muted hover:text-danger">
-                      Remove
+                      {t(locale, "remove")}
                     </button>
                   </form>
                 ) : leftover && count > 0 ? (
-                  <p className="text-xs text-muted">Old name, not an account</p>
+                  <p className="text-xs text-muted">{t(locale, "oldName")}</p>
                 ) : null}
               </li>
             );
@@ -97,11 +105,10 @@ export default async function PeoplePage() {
         </ul>
         {notebook.isOwn ? (
           <p className="mt-3 text-xs text-muted">
-            To revoke access, use{" "}
+            {t(locale, "revokeHint")}{" "}
             <Link href="/sharing" className="text-accent underline">
-              Sharing
+              {t(locale, "sharing")}
             </Link>
-            .
           </p>
         ) : null}
       </section>

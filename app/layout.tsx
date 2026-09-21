@@ -1,5 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Sans } from "next/font/google";
+import { LocaleProvider } from "@/components/locale-provider";
+import { TimezoneSync } from "@/components/timezone-sync";
+import { getLocale } from "@/lib/locale";
 import "./globals.css";
 
 const plex = IBM_Plex_Sans({
@@ -20,10 +23,17 @@ export const viewport: Viewport = {
   themeColor: "#f4f4f1",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const locale = await getLocale();
+
   return (
-    <html lang="en" className={`${plex.variable} h-full`}>
-      <body className="min-h-full bg-bg font-sans text-ink antialiased">{children}</body>
+    <html lang={locale === "zh" ? "zh-CN" : "en"} className={`${plex.variable} h-full`}>
+      <body className="min-h-full bg-bg font-sans text-ink antialiased">
+        <LocaleProvider locale={locale}>
+          <TimezoneSync />
+          {children}
+        </LocaleProvider>
+      </body>
     </html>
   );
 }

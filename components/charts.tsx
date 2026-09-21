@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useLocale, useT } from "@/components/locale-provider";
+import { categoryLabel, localeTag } from "@/lib/i18n";
 import type { NamedTotal } from "@/lib/stats";
 import { formatMoney } from "@/lib/money";
 
@@ -17,6 +19,8 @@ const PALETTE = [
 
 export function MonthlyChart({ data }: { data: NamedTotal[] }) {
   const [active, setActive] = useState<number | null>(null);
+  const t = useT();
+  const locale = useLocale();
   const width = 640;
   const height = 260;
   const pad = { top: 16, right: 12, bottom: 36, left: 48 };
@@ -30,8 +34,8 @@ export function MonthlyChart({ data }: { data: NamedTotal[] }) {
 
   return (
     <figure className="panel overflow-hidden">
-      <h2 className="panel-title">Spending by month</h2>
-      <svg viewBox={`0 0 ${width} ${height}`} className="mt-4 h-auto w-full max-w-full" role="img" aria-label="Spending by month">
+      <h2 className="panel-title">{t("spendingByMonth")}</h2>
+      <svg viewBox={`0 0 ${width} ${height}`} className="mt-4 h-auto w-full max-w-full" role="img" aria-label={t("spendingByMonth")}>
         {ticks.map((tick) => {
           const y = pad.top + innerH * (1 - tick);
           const labelValue = chartMax * tick;
@@ -39,7 +43,7 @@ export function MonthlyChart({ data }: { data: NamedTotal[] }) {
             <g key={tick}>
               <line x1={pad.left} x2={width - pad.right} y1={y} y2={y} stroke="#d2d2cc" />
               <text x={pad.left - 8} y={y + 4} textAnchor="end" fontSize="10" fill="#5a5a5a">
-                {labelValue.toLocaleString("en-US", {
+                {labelValue.toLocaleString(localeTag(locale), {
                   maximumFractionDigits: labelValue > 0 && labelValue < 10 ? 1 : 0,
                 })}
               </text>
@@ -87,8 +91,8 @@ export function MonthlyChart({ data }: { data: NamedTotal[] }) {
       </svg>
       <p className="mt-2 text-sm">
         {selected
-          ? `${selected.label}: ${formatMoney(selected.value)}`
-          : "Tap a month for the amount."}
+          ? `${selected.label}: ${formatMoney(selected.value, "USD", locale)}`
+          : t("tapMonth")}
       </p>
     </figure>
   );
@@ -96,19 +100,21 @@ export function MonthlyChart({ data }: { data: NamedTotal[] }) {
 
 export function PersonBars({ data }: { data: NamedTotal[] }) {
   const max = Math.max(...data.map((d) => d.value), 1);
+  const t = useT();
+  const locale = useLocale();
 
   return (
     <figure className="panel">
-      <h2 className="panel-title">Spending by person</h2>
+      <h2 className="panel-title">{t("spendingByPerson")}</h2>
       {data.length === 0 ? (
-        <p className="mt-4 text-sm text-muted">No expenses yet.</p>
+        <p className="mt-4 text-sm text-muted">{t("noExpenses")}</p>
       ) : (
         <ul className="mt-4 grid gap-3">
           {data.map((item, index) => (
             <li key={item.label} className="grid gap-1">
               <div className="flex items-baseline justify-between text-sm">
                 <span>{item.label}</span>
-                <span className="text-muted">{formatMoney(item.value)}</span>
+                <span className="text-muted">{formatMoney(item.value, "USD", locale)}</span>
               </div>
               <div className="h-2 overflow-hidden bg-line">
                 <div
@@ -129,6 +135,8 @@ export function PersonBars({ data }: { data: NamedTotal[] }) {
 
 export function CategoryPie({ data, caption }: { data: NamedTotal[]; caption?: string }) {
   const [active, setActive] = useState(0);
+  const t = useT();
+  const locale = useLocale();
   const total = data.reduce((sum, item) => sum + item.value, 0);
   const cx = 110;
   const cy = 110;
@@ -148,12 +156,14 @@ export function CategoryPie({ data, caption }: { data: NamedTotal[]; caption?: s
 
   return (
     <figure className="panel">
-      <h2 className="panel-title">Spending by category{caption ? ` · ${caption}` : ""}</h2>
+      <h2 className="panel-title">
+        {caption ? t("spendingByCategoryCaption", { caption }) : t("spendingByCategory")}
+      </h2>
       {data.length === 0 ? (
-        <p className="mt-4 text-sm text-muted">No expenses yet.</p>
+        <p className="mt-4 text-sm text-muted">{t("noExpenses")}</p>
       ) : (
         <div className="mt-4 flex flex-col items-center gap-4 sm:flex-row">
-          <svg viewBox="0 0 220 220" className="h-40 w-40 shrink-0 sm:h-48 sm:w-48" role="img" aria-label="Spending by category">
+          <svg viewBox="0 0 220 220" className="h-40 w-40 shrink-0 sm:h-48 sm:w-48" role="img" aria-label={t("spendingByCategory")}>
             {slices.length === 1 ? (
               <circle
                 cx={cx}
@@ -184,7 +194,7 @@ export function CategoryPie({ data, caption }: { data: NamedTotal[]; caption?: s
             ) : null}
             {selected ? (
               <text x={cx} y={cy + 12} textAnchor="middle" fontSize="9" fill="#5a5a5a">
-                {selected.label}
+                {categoryLabel(locale, selected.label)}
               </text>
             ) : null}
           </svg>
@@ -203,9 +213,9 @@ export function CategoryPie({ data, caption }: { data: NamedTotal[]; caption?: s
                       className="inline-block h-2.5 w-2.5"
                       style={{ background: slice.color }}
                     />
-                    {slice.label}
+                    {categoryLabel(locale, slice.label)}
                   </span>
-                  <span className="text-muted">{formatMoney(slice.value)}</span>
+                  <span className="text-muted">{formatMoney(slice.value, "USD", locale)}</span>
                 </button>
               </li>
             ))}

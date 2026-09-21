@@ -3,6 +3,8 @@ import { PersonCurve } from "@/components/person-curve";
 import { RangeLinks } from "@/components/range-links";
 import { getActiveNotebook } from "@/lib/access";
 import { requireUser } from "@/lib/auth";
+import { t, rangeMessage } from "@/lib/i18n";
+import { getLocale } from "@/lib/locale";
 import { formatMoney } from "@/lib/money";
 import { getNotebook } from "@/lib/notebook";
 import { prisma } from "@/lib/prisma";
@@ -13,7 +15,6 @@ import {
   chartBuckets,
   parseRange,
   priorWindow,
-  rangeCaption,
 } from "@/lib/stats";
 
 export default async function DashboardPage({
@@ -22,17 +23,18 @@ export default async function DashboardPage({
   searchParams: Promise<{ range?: string }>;
 }) {
   const user = await requireUser();
+  const locale = await getLocale();
   const notebook = await getActiveNotebook(user);
-  const { expenses } = await getNotebook(notebook.ownerId, user.id);
+  const { expenses } = await getNotebook(notebook.ownerId, user.id, locale);
   const { range: rangeRaw } = await searchParams;
   const range = parseRange(rangeRaw);
-  const lifetime = buildStats(expenses);
+  const lifetime = buildStats(expenses, locale);
   const firstSpend = earliestSpend(expenses);
-  const buckets = chartBuckets(range, new Date(), firstSpend);
+  const buckets = chartBuckets(range, new Date(), firstSpend, locale);
   const windowStart = buckets[0]?.start;
   const windowEnd = buckets[buckets.length - 1]?.end;
   const inWindow = expenses.filter((expense) => inBucketWindow(expense.spentAt, windowStart, windowEnd));
-  const stats = buildStats(inWindow);
+  const stats = buildStats(inWindow, locale);
   const personSeries = buildPersonSeries(inWindow, buckets);
   const previous = priorWindow(buckets);
   const priorTotal = previous
@@ -42,6 +44,14 @@ export default async function DashboardPage({
     : 0;
   const vsPrior = stats.allTime - priorTotal;
   const vsPriorPct = priorTotal > 0 ? (vsPrior / priorTotal) * 100 : null;
+  const caption = t(locale, rangeMessage[range].caption);
+  const vsPriorHint = previous
+    ? t(locale, "vsPrior", {
+        amount: `${vsPrior >= 0 ? "+" : "−"}${formatMoney(Math.abs(vsPrior), "USD", locale)}${
+          vsPriorPct === null ? "" : ` (${vsPriorPct >= 0 ? "+" : ""}${vsPriorPct.toFixed(0)}%)`
+        }`,
+      })
+    : undefined;
   const pendingInvites = await prisma.invite.findMany({
     where: { email: user.email, status: "pending" },
     include: { owner: { select: { email: true } } },
@@ -51,34 +61,34 @@ export default async function DashboardPage({
   return (
     <main className="grid gap-4 sm:gap-5">
       <div>
-        <h1 className="text-xl font-semibold sm:text-2xl">Overview</h1>
+        <h1 className="text-xl font-semibold sm:text-2xl">{t(locale, "overview")}</h1>
         {notebook.isShared ? (
           <p className="mt-1 text-sm text-muted">
-            {notebook.isOwn
-              ? `Shared with ${notebook.sharedWith.join(", ")}`
-              : `Shared with ${notebook.email}`}
+            {t(locale, "sharedWith", {
+              names: notebook.isOwn ? notebook.sharedWith.join(", ") : notebook.email,
+            })}
           </p>
         ) : null}
       </div>
 
       {pendingInvites.length > 0 ? (
         <section className="panel">
-          <h2 className="panel-title">Invites</h2>
+          <h2 className="panel-title">{t(locale, "invites")}</h2>
           <ul className="mt-3 divide-y divide-line">
             {pendingInvites.map((invite) => (
               <li key={invite.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
-                <p className="break-all text-sm">{invite.owner.email} invited you.</p>
+                <p className="break-all text-sm">{t(locale, "invitedYou", { email: invite.owner.email })}</p>
                 <div className="flex min-h-10 items-center gap-4">
                   <form action={acceptInvite}>
                     <input type="hidden" name="token" value={invite.token} />
                     <button type="submit" className="action-link text-accent">
-                      Accept
+                      {t(locale, "accept")}
                     </button>
                   </form>
                   <form action={declineInvite}>
                     <input type="hidden" name="id" value={invite.id} />
                     <button type="submit" className="action-link text-muted hover:text-danger">
-                      Decline
+                      {t(locale, "decline")}
                     </button>
                   </form>
                 </div>
@@ -90,28 +100,22 @@ export default async function DashboardPage({
 
       <section className="grid grid-cols-2 gap-px border border-line bg-line">
         <Stat
-          label={rangeCaption(range)}
-          value={formatMoney(stats.allTime)}
-          hint={
-            previous
-              ? `${vsPrior >= 0 ? "+" : "−"}${formatMoney(Math.abs(vsPrior))}${
-                  vsPriorPct === null ? "" : ` (${vsPriorPct >= 0 ? "+" : ""}${vsPriorPct.toFixed(0)}%)`
-                } vs prior`
-              : undefined
-          }
+          label={caption}
+          value={formatMoney(stats.allTime, "USD", locale)}
+          hint={vsPriorHint}
           up={vsPrior >= 0}
         />
-        <Stat label="All time" value={formatMoney(lifetime.allTime)} />
+        <Stat label={t(locale, "allTime")} value={formatMoney(lifetime.allTime, "USD", locale)} />
       </section>
 
       <PersonCurve
         key={range}
         series={personSeries}
         buckets={buckets}
-        caption={rangeCaption(range)}
+        caption={caption}
         toolbar={<RangeLinks current={range} />}
       />
-      <CategoryPie data={stats.byCategory} caption={rangeCaption(range)} />
+      <CategoryPie data={stats.byCategory} caption={caption} />
     </main>
   );
 }

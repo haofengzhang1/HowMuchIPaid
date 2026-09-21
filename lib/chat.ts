@@ -24,15 +24,15 @@ export async function listChatContacts(userId: string) {
   const [owned, joined] = await Promise.all([
     prisma.notebookShare.findMany({
       where: { ownerId: userId },
-      include: { member: { select: { id: true, email: true } } },
+      include: { member: { select: { id: true, email: true, avatarUpdatedAt: true } } },
     }),
     prisma.notebookShare.findMany({
       where: { memberId: userId },
-      include: { owner: { select: { id: true, email: true } } },
+      include: { owner: { select: { id: true, email: true, avatarUpdatedAt: true } } },
     }),
   ]);
 
-  const byId = new Map<string, { id: string; email: string }>();
+  const byId = new Map<string, { id: string; email: string; avatarUpdatedAt: Date | null }>();
   for (const share of owned) {
     byId.set(share.member.id, share.member);
   }
@@ -42,11 +42,11 @@ export async function listChatContacts(userId: string) {
   return [...byId.values()].sort((a, b) => a.email.localeCompare(b.email));
 }
 
-export async function sentTodayCount(userId: string) {
+export async function sentTodayCount(userId: string, since?: Date) {
   return prisma.chatMessage.count({
     where: {
       senderId: userId,
-      createdAt: { gte: startOfUtcDay() },
+      createdAt: { gte: since ?? startOfUtcDay() },
     },
   });
 }
